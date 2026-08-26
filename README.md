@@ -198,11 +198,14 @@ nằm ở Neon nên **không bị xoá sau 30 ngày** như Postgres free của c
 ### Bước 2 — Web lên Vercel
 
 1. Import repo, đặt **Root Directory** là `apps/web`.
-2. Bật **Include source files outside of the Root Directory** (cần, vì web dùng
-   `packages/content`). Nếu build lỗi không tìm thấy `@kanado/content`, đặt Install Command là
-   `cd ../.. && npm install` và Build Command là
-   `cd ../.. && npm run build:content && npm run build -w @kanado/web`.
+2. Bật **Include source files outside of the Root Directory** — bắt buộc, vì web dùng
+   `packages/content` nằm ngoài thư mục gốc.
 3. Biến môi trường: `NEXT_PUBLIC_API_URL=https://kanado-api-xxxx.onrender.com/api`
+4. Deploy. Không cần chỉnh Install/Build Command: `apps/web` có script `prebuild` tự dựng
+   `@kanado/content` trước khi `next build` chạy.
+
+Nếu vẫn báo `Module not found: Can't resolve '@kanado/content'`, nghĩa là Vercel không thấy thư mục
+`packages/` — kiểm tra lại bước 2, hoặc đặt Install Command thành `cd ../.. && npm install`.
 
 ### Bước 3 — Nối hai đầu lại
 
