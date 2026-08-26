@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { API_URL, ApiError, NetworkError } from "@/lib/api";
+import { ApiError, NetworkError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
@@ -90,9 +90,6 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           </div>
 
           {error && <div className="formerr">{error}</div>}
-          <div style={{ fontSize: 11, color: "var(--ink-3)" }}>
-            Đang gọi API: <span className="mono">{API_URL}</span>
-          </div>
 
           <button className="btn block" type="submit" disabled={busy}>
             {busy ? "Đang xử lý…" : isRegister ? "Tạo tài khoản" : "Đăng nhập"}
