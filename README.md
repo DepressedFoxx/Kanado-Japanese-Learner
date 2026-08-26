@@ -200,9 +200,17 @@ nằm ở Neon nên **không bị xoá sau 30 ngày** như Postgres free của c
 1. Import repo, đặt **Root Directory** là `apps/web`.
 2. Bật **Include source files outside of the Root Directory** — bắt buộc, vì web dùng
    `packages/content` nằm ngoài thư mục gốc.
-3. Biến môi trường: `NEXT_PUBLIC_API_URL=https://kanado-api-xxxx.onrender.com/api`
-4. Deploy. Không cần chỉnh Install/Build Command: `apps/web` có script `prebuild` tự dựng
-   `@kanado/content` trước khi `next build` chạy.
+3. Deploy. Không cần đặt biến môi trường nào, cũng không cần chỉnh Install/Build Command:
+   - URL API nằm trong `apps/web/.env.production` (đã commit).
+   - `apps/web` có script `prebuild` tự dựng `@kanado/content` trước khi `next build` chạy.
+
+Đổi domain API thì sửa `apps/web/.env.production` rồi push, Vercel tự build lại.
+
+> **Vì sao URL API để trong repo mà không đặt trong dashboard?**
+> Tiền tố `NEXT_PUBLIC_` khiến Next.js nhúng giá trị thẳng vào JavaScript gửi xuống trình duyệt —
+> nó công khai theo đúng thiết kế, không phải bí mật. Vercel còn chặn không cho lưu biến có tiền tố
+> này dưới dạng Secret. Để trong repo thì rõ ràng hơn và bớt một bước cấu hình tay. Bí mật thật
+> (chuỗi Neon, JWT secret) nằm ở phía Render và không bao giờ xuống trình duyệt.
 
 Nếu vẫn báo `Module not found: Can't resolve '@kanado/content'`, nghĩa là Vercel không thấy thư mục
 `packages/` — kiểm tra lại bước 2, hoặc đặt Install Command thành `cd ../.. && npm install`.

@@ -7,7 +7,7 @@
  * refresh token sang cookie httpOnly + SameSite=None.
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
 const ACCESS_KEY = "kanado.access";
 const REFRESH_KEY = "kanado.refresh";
@@ -31,6 +31,21 @@ export class ApiError extends Error {
   ) {
     super(message);
     this.name = "ApiError";
+  }
+}
+
+/** Request chưa tới được server: sai URL, API chết, hoặc bị CORS chặn. */
+export class NetworkError extends Error {
+  constructor(readonly apiUrl: string) {
+    const local = /localhost|127\.0\.0\.1/.test(apiUrl);
+    super(
+      local
+        ? `Web đang gọi API ở ${apiUrl} — đây là địa chỉ máy cá nhân, không phải máy chủ thật. ` +
+          "Biến NEXT_PUBLIC_API_URL chưa được đặt lúc build. Đặt nó trên Vercel rồi deploy lại (restart không đủ)."
+        : `Không gọi được ${apiUrl}. Kiểm tra ba việc: API đã chạy chưa (mở ${apiUrl}/health trên trình duyệt), ` +
+          "CORS_ORIGINS trên máy chủ đã khớp domain trang này chưa, và nếu dùng gói free thì lần gọi đầu có thể mất 30–60 giây do server đang ngủ.",
+    );
+    this.name = "NetworkError";
   }
 }
 
@@ -121,7 +136,14 @@ async function request<T>(
   headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  const response = await fetch(`${API_URL}${path}`, { ...options, headers });
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, { ...options, headers });
+  } catch {
+    // fetch chỉ ném lỗi khi request chưa tới được server: sai URL, API chết,
+    // hoặc bị CORS chặn. Nói rõ đang gọi đi đâu để biết đường sửa.
+    throw new NetworkError(API_URL);
+  }
 
   if (response.status === 401 && retry && getRefreshToken()) {
     const ok = await refreshTokens();
