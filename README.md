@@ -35,7 +35,7 @@ API chỉ thật sự cần cho hai việc: **tài khoản** và **đồng bộ 
 
 ## Chạy lần đầu
 
-Cần Node 20+ và Docker Desktop.
+Cần Node 20+. Docker Desktop chỉ cần khi muốn chạy Postgres ở máy thay vì dùng Neon.
 
 ```bash
 npm run setup
@@ -46,10 +46,17 @@ Lệnh này cài dependencies, build package nội dung, và sinh Prisma Client.
 ```bash
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
-npm run db:up
+```
+
+Điền `DATABASE_URL` và `DIRECT_URL` trong `apps/api/.env` bằng chuỗi Neon (xem mục dưới), rồi:
+
+```bash
 npm run db:migrate
 npm run db:seed
 ```
+
+Muốn dùng Postgres local thay vì Neon thì bỏ comment hai dòng `localhost` trong `.env` và chạy
+`npm run db:up` trước.
 
 Mở hai terminal:
 
@@ -63,9 +70,24 @@ npm run dev:web
 
 Web ở http://localhost:3000, API ở http://localhost:4000/api.
 
+## Hai chuỗi kết nối: DATABASE_URL và DIRECT_URL
+
+Prisma cần hai biến vì Neon có hai loại endpoint:
+
+| Biến | Dùng cho | Endpoint |
+|---|---|---|
+| `DATABASE_URL` | ứng dụng lúc chạy | có `-pooler` trong hostname nếu deploy serverless (Vercel); dùng direct nếu chạy server thường (Render, VM) |
+| `DIRECT_URL` | migration | **luôn** là endpoint direct — pooler không chạy được lệnh DDL |
+
+Lấy cả hai trong Neon Console → Connection Details (chọn "Pooled connection" để ra chuỗi có
+`-pooler`). Chạy Postgres local trong Docker thì đặt cả hai bằng cùng một chuỗi `localhost`.
+
 ## Kết nối DBeaver
 
-Sau `npm run db:up`, tạo connection PostgreSQL trong DBeaver:
+**Với Neon** — dán thẳng chuỗi direct vào ô URL khi tạo connection PostgreSQL, hoặc điền tay
+host / database / user / password lấy từ chuỗi đó. Nhớ bật SSL (`sslmode=require`).
+
+**Với Postgres local** sau `npm run db:up`:
 
 | Trường | Giá trị |
 |---|---|
@@ -90,7 +112,7 @@ Muốn xem nhanh không cần DBeaver: `npm run db:studio` mở Prisma Studio.
 |---|---|
 | `npm run dev:web` / `npm run dev:api` | Chạy chế độ phát triển |
 | `npm run build` | Build cả ba package |
-| `npm run db:up` / `npm run db:down` | Bật/tắt Postgres |
+| `npm run db:up` / `npm run db:down` | Bật/tắt Postgres local trong Docker (không cần khi dùng Neon) |
 | `npm run db:migrate` | Tạo và áp dụng migration mới |
 | `npm run db:seed` | Nạp lại nội dung học vào DB |
 | `npm run db:studio` | Mở Prisma Studio |
@@ -144,15 +166,17 @@ Tiến độ từ bản HTML một trang (`kanado.v1`, `kanado.srs.v1`, `kanado.
 
 ## Deploy
 
-### API + Database lên Railway
+Database dùng **Neon** (free vĩnh viễn, không hết hạn). Chỉ cần chọn nơi chạy API.
 
-1. Tạo project mới, thêm **PostgreSQL** từ marketplace.
-2. Thêm service từ repo GitHub này, đặt **Root Directory** là `/` và dùng
-   `apps/api/Dockerfile` làm build config (Railway đọc được Dockerfile khi trỏ đúng đường dẫn).
-3. Biến môi trường:
+### API lên Render
+
+1. New → Web Service → chọn repo này, Runtime **Docker**, Dockerfile Path `apps/api/Dockerfile`,
+   Docker Context là thư mục gốc `.`.
+2. Biến môi trường:
 
    ```
-   DATABASE_URL=${{Postgres.DATABASE_URL}}
+   DATABASE_URL=<chuỗi direct của Neon>
+   DIRECT_URL=<chuỗi direct của Neon>
    JWT_ACCESS_SECRET=<openssl rand -base64 48>
    JWT_REFRESH_SECRET=<chuỗi khác, cũng ngẫu nhiên>
    JWT_ACCESS_TTL=15m
@@ -161,11 +185,16 @@ Tiến độ từ bản HTML một trang (`kanado.v1`, `kanado.srs.v1`, `kanado.
    CORS_ORIGINS=https://<tên-app>.vercel.app
    ```
 
-4. Deploy. Dockerfile tự chạy `prisma migrate deploy` trước khi khởi động.
-5. Nạp nội dung một lần: mở shell của service rồi chạy `npx prisma db seed`, hoặc chạy tại máy với
-   `DATABASE_URL` trỏ về Postgres của Railway.
+3. Deploy. Dockerfile tự chạy `prisma migrate deploy` trước khi khởi động.
+4. Nạp nội dung một lần từ máy bạn: `npm run db:seed` với `.env` đang trỏ về Neon.
 
-Render làm tương tự: Web Service kiểu Docker, cùng bộ biến môi trường.
+Gói free của Render ngủ sau 15 phút không có request, lần gọi đầu sau đó mất 30–60 giây. Database
+nằm ở Neon nên **không bị xoá sau 30 ngày** như Postgres free của chính Render.
+
+### Nếu chuyển API sang Vercel serverless
+
+Đổi `DATABASE_URL` sang chuỗi **có `-pooler`** (giữ `DIRECT_URL` là direct). Serverless mở kết nối
+mới mỗi lần gọi hàm, không qua pooler sẽ hết connection rất nhanh.
 
 ### Web lên Vercel
 

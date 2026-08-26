@@ -7,7 +7,11 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // Runtime dùng chuỗi có pooler (hostname chứa "-pooler") khi chạy serverless,
+  // vì mỗi lần gọi hàm lại mở một kết nối mới.
   url      = env("DATABASE_URL")
+  // Migration phải đi đường direct — pooler không chạy được lệnh DDL.
+  directUrl = env("DIRECT_URL")
 }
 
 /// Người học
