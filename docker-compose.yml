@@ -1,0 +1,23 @@
+# Postgres cho môi trường phát triển.
+# Chuỗi kết nối dán vào DBeaver: localhost:5432, db kanado, user kanado, mật khẩu kanado.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kanado-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kanado
+      POSTGRES_PASSWORD: kanado
+      POSTGRES_DB: kanado
+    ports:
+      - "5432:5432"
+    volumes:
+      - kanado-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kanado -d kanado"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  kanado-pgdata:

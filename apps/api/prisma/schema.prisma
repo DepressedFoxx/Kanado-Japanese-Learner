@@ -1,0 +1,170 @@
+// Kanado — schema Postgres.
+// Xem trực tiếp bằng DBeaver với chuỗi kết nối trong DATABASE_URL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Người học
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+  kanaStats     KanaStat[]
+  srsCards      SrsCard[]
+  testAttempts  TestAttempt[]
+
+  @@map("users")
+}
+
+/// Refresh token đã băm, cho phép thu hồi từng phiên đăng nhập
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+/// Thống kê nhận mặt chữ trong tab Luyện bảng chữ, khóa dạng "katakana:ア"
+model KanaStat {
+  id        String   @id @default(cuid())
+  userId    String
+  kanaKey   String
+  correct   Int      @default(0)
+  wrong     Int      @default(0)
+  streak    Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kanaKey])
+  @@index([userId])
+  @@map("kana_stats")
+}
+
+/// Trạng thái lặp lại ngắt quãng của một thẻ, khóa dạng "k4|員"
+model SrsCard {
+  id        String   @id @default(cuid())
+  userId    String
+  cardId    String
+  deckId    String
+  box       Int      @default(0)
+  /// số ngày kể từ epoch, khớp cách tính phía client
+  dueDay    Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cardId])
+  @@index([userId, deckId])
+  @@map("srs_cards")
+}
+
+/// Một lần làm bài ở tab Kiểm tra
+model TestAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  level     String
+  total     Int
+  correct   Int
+  seconds   Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("test_attempts")
+}
+
+// ------------------------------------------------------------------
+// Nội dung học — seed từ package @kanado/content
+// ------------------------------------------------------------------
+
+model Kanji {
+  id             Int    @id @default(autoincrement())
+  char           String @unique
+  meaning        String
+  onyomi         String
+  kunyomi        String
+  exampleWord    String
+  exampleReading String
+  exampleMeaning String
+  level          String
+
+  @@index([level])
+  @@map("kanji")
+}
+
+model VocabItem {
+  id         Int    @id @default(autoincrement())
+  groupId    String
+  groupLabel String
+  level      String
+  word       String
+  reading    String
+  romaji     String
+  meaning    String
+  isKatakana Boolean @default(false)
+
+  @@unique([groupId, word])
+  @@index([level])
+  @@map("vocab_items")
+}
+
+model GrammarPoint {
+  id       Int    @id @default(autoincrement())
+  pattern  String
+  gloss    String
+  note     String
+  level    String
+  /// [{ jp, vn }]
+  examples Json
+
+  @@unique([level, pattern])
+  @@index([level])
+  @@map("grammar_points")
+}
+
+model ClozeQuestion {
+  id          Int      @id @default(autoincrement())
+  sentence    String
+  answer      String
+  distractors String[]
+  note        String
+  translation String
+  level       String
+
+  @@unique([level, sentence])
+  @@index([level])
+  @@map("cloze_questions")
+}
+
+model KanaCharacter {
+  id        Int     @id @default(autoincrement())
+  group     String
+  row       String
+  hiragana  String?
+  katakana  String  @unique
+  romaji    String
+
+  @@index([group])
+  @@map("kana_characters")
+}
