@@ -168,56 +168,65 @@ Tiến độ từ bản HTML một trang (`kanado.v1`, `kanado.srs.v1`, `kanado.
 
 Database dùng **Neon** (free vĩnh viễn, không hết hạn). Chỉ cần chọn nơi chạy API.
 
-### API lên Render
+### Bước 1 — API lên Render
 
-1. New → Web Service → chọn repo này, Runtime **Docker**, Dockerfile Path `apps/api/Dockerfile`,
-   Docker Context là thư mục gốc `.`.
-2. Biến môi trường:
+Repo có sẵn `render.yaml` nên không phải điền tay cấu hình.
 
-   ```
-   DATABASE_URL=<chuỗi direct của Neon>
-   DIRECT_URL=<chuỗi direct của Neon>
-   JWT_ACCESS_SECRET=<openssl rand -base64 48>
-   JWT_REFRESH_SECRET=<chuỗi khác, cũng ngẫu nhiên>
-   JWT_ACCESS_TTL=15m
-   JWT_REFRESH_TTL=30d
-   PORT=4000
-   CORS_ORIGINS=https://<tên-app>.vercel.app
-   ```
+1. Push code lên GitHub (nếu chưa): `git push -u origin main`.
+2. Render → **New** → **Blueprint** → chọn repo này. Render đọc `render.yaml` và tạo sẵn service
+   `kanado-api` (Docker, gói free, region Singapore, health check `/api/health`).
+3. Render hỏi ba biến chưa có giá trị — điền vào:
 
-3. Deploy. Dockerfile tự chạy `prisma migrate deploy` trước khi khởi động.
-4. Nạp nội dung một lần từ máy bạn: `npm run db:seed` với `.env` đang trỏ về Neon.
+   | Biến | Giá trị |
+   |---|---|
+   | `DATABASE_URL` | chuỗi kết nối Neon (bản direct) |
+   | `DIRECT_URL` | cùng chuỗi trên |
+   | `CORS_ORIGINS` | tạm điền `http://localhost:3000`, sửa lại ở bước 3 |
+
+   Hai biến `JWT_ACCESS_SECRET` và `JWT_REFRESH_SECRET` được Render tự sinh ngẫu nhiên.
+
+4. Apply. Lần build đầu mất khoảng 5–10 phút. Container tự chạy `prisma migrate deploy` trước khi
+   khởi động nên không cần thao tác gì thêm.
+5. Kiểm tra: mở `https://kanado-api-xxxx.onrender.com/api/health`, phải ra `{"status":"ok",...}`.
+
+Nội dung học (kanji, từ vựng, ngữ pháp) chỉ cần nạp **một lần** và đã nằm sẵn trên Neon. Nếu về sau
+thêm nội dung mới thì chạy `npm run db:seed` từ máy bạn với `.env` trỏ về Neon.
 
 Gói free của Render ngủ sau 15 phút không có request, lần gọi đầu sau đó mất 30–60 giây. Database
 nằm ở Neon nên **không bị xoá sau 30 ngày** như Postgres free của chính Render.
 
-### Nếu chuyển API sang Vercel serverless
-
-Đổi `DATABASE_URL` sang chuỗi **có `-pooler`** (giữ `DIRECT_URL` là direct). Serverless mở kết nối
-mới mỗi lần gọi hàm, không qua pooler sẽ hết connection rất nhanh.
-
-### Web lên Vercel
+### Bước 2 — Web lên Vercel
 
 1. Import repo, đặt **Root Directory** là `apps/web`.
-2. Vercel tự nhận Next.js. Thêm biến môi trường:
+2. Bật **Include source files outside of the Root Directory** (cần, vì web dùng
+   `packages/content`). Nếu build lỗi không tìm thấy `@kanado/content`, đặt Install Command là
+   `cd ../.. && npm install` và Build Command là
+   `cd ../.. && npm run build:content && npm run build -w @kanado/web`.
+3. Biến môi trường: `NEXT_PUBLIC_API_URL=https://kanado-api-xxxx.onrender.com/api`
 
-   ```
-   NEXT_PUBLIC_API_URL=https://<api-cua-ban>.up.railway.app/api
-   ```
+### Bước 3 — Nối hai đầu lại
 
-3. Deploy, rồi quay lại Railway sửa `CORS_ORIGINS` thành domain Vercel thật.
+Quay lại Render, sửa `CORS_ORIGINS` thành domain Vercel thật
+(`https://<tên-app>.vercel.app`) rồi để service khởi động lại. Không làm bước này thì trang web mở
+được nhưng đăng nhập sẽ báo lỗi CORS trong Console.
 
-Biến `NEXT_PUBLIC_*` được nhúng vào bundle lúc build, nên đổi giá trị thì phải **redeploy**, không
-chỉ restart.
+### Bước 4 — Kiểm tra
 
-### Kiểm tra sau khi deploy
+Mở trang web, tạo tài khoản, học vài chữ rồi mở tab ẩn danh đăng nhập lại — tiến độ phải theo sang.
+Chấm tròn cạnh tên tài khoản trên header chuyển xanh là đã đồng bộ được.
 
-```bash
-curl https://<api>/api/health
-```
+### Vài chỗ hay vướng
 
-Phải trả về `{"status":"ok",...}`. Nếu trang web đăng nhập được nhưng báo lỗi CORS trong Console,
-gần như chắc chắn `CORS_ORIGINS` chưa khớp domain Vercel.
+- **Đổi `NEXT_PUBLIC_API_URL` phải redeploy Vercel**, không chỉ restart — biến `NEXT_PUBLIC_*` được
+  nhúng thẳng vào bundle lúc build.
+- **Đăng nhập báo lỗi CORS** trong Console: `CORS_ORIGINS` trên Render chưa khớp domain Vercel.
+  Phải khớp cả `https://` và không có dấu `/` ở cuối.
+- **Lần gọi đầu trong ngày chậm 30–60 giây**: đúng như thiết kế của gói free Render, service ngủ
+  sau 15 phút không ai dùng. Muốn hết thì nâng lên gói trả phí, hoặc chuyển API sang Vercel
+  serverless (cold start còn 1–2 giây) — khi đó nhớ đổi `DATABASE_URL` sang chuỗi **có `-pooler`**
+  của Neon, vì serverless mở kết nối mới mỗi lần gọi.
+- **Build Docker lỗi Prisma/OpenSSL**: Dockerfile dùng `node:20-slim` chứ không phải `alpine` chính
+  vì lý do này — đừng đổi base image sang alpine nếu không muốn xử lý `binaryTargets`.
 
 ## Ghi chú bảo mật
 

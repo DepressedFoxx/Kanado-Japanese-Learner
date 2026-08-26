@@ -1,0 +1,41 @@
+# Blueprint cho Render — vào Render → New → Blueprint → chọn repo này,
+# Render đọc file này và tạo sẵn service với đúng cấu hình.
+#
+# Database KHÔNG khai ở đây: Postgres free của Render bị xoá sau 30 ngày,
+# nên dùng Neon (free vĩnh viễn) và dán chuỗi kết nối vào biến môi trường.
+
+services:
+  - type: web
+    name: kanado-api
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    # Build context là thư mục gốc vì Dockerfile cần cả packages/content
+    dockerContext: .
+    plan: free
+    region: singapore
+    healthCheckPath: /api/health
+    envVars:
+      # Hai chuỗi Neon — tự điền trong dashboard, không commit vào repo.
+      # Gói free chạy server thường (không phải serverless) nên dùng chuỗi
+      # direct cho cả hai là được.
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+
+      # Render tự sinh chuỗi ngẫu nhiên, không cần bạn nghĩ ra
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 30d
+
+      # Domain của FE trên Vercel — sửa lại sau khi deploy FE xong
+      - key: CORS_ORIGINS
+        sync: false
+
+      # Không khai PORT: Render tự cấp, app đọc process.env.PORT
