@@ -6,7 +6,9 @@
  *
  * Định dạng: [câu có ___, đáp án, lựa chọn sai, giải thích, dịch]
  */
-export const GBANK_N3: (string | string[])[][] = [
+import { validateClozeRows } from "./validate";
+
+export const GBANK_N3: (string | string[])[][] = validateClozeRows([
   ["日本の文化___研究しています。","について",["に対して","によって","において"],"について nêu chủ đề của việc nghiên cứu; に対して là đối tượng mà thái độ hướng tới.","Tôi đang nghiên cứu về văn hóa Nhật."],
   ["先生___失礼なことを言ってしまった。","に対して",["について","にとって","によって"],"Thái độ hướng tới một người thì dùng に対して.","Tôi đã lỡ nói điều thất lễ với thầy."],
   ["人___考え方が違う。","によって",["について","に対して","にとって"],"によって mang nghĩa tùy theo, mỗi bên một khác.","Tùy người mà cách nghĩ khác nhau."],
@@ -50,4 +52,4 @@ export const GBANK_N3: (string | string[])[][] = [
   ["天気予報によると、明日は雪だ___。","ということだ",["わけだ","はずだ","ものだ"],"ということだ dùng để truyền đạt lại thông tin nghe được.","Theo dự báo thì nghe nói mai có tuyết."],
   ["こんな時間に電話するなんて、寝ている___。","に決まっている",["に違いない","わけがない","はずがない"],"に決まっている là niềm tin chủ quan chắc nịch của người nói.","Gọi giờ này thì chắc chắn người ta đang ngủ."],
   ["狭い___も、楽しい我が家。","ながら",["ばかり","だけ","こそ"],"ながらも thêm も thành ý nhượng bộ, khác ながら chỉ vừa làm vừa làm.","Tuy chật nhưng là mái nhà vui vẻ."],
-];
+], "câu hỏi N3");

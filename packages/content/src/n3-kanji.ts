@@ -7,7 +7,9 @@
  *
  * Định dạng giống KANJI: [chữ, nghĩa, âm On, âm Kun, "từ ví dụ|đọc|nghĩa", cấp]
  */
-export const KANJI_N3: string[][] = [
+import { validateKanjiRows } from "./validate";
+
+export const KANJI_N3: string[][] = validateKanjiRows([
   ["政","chính trị","セイ","まつりごと","政治|せいじ|chính trị","N3"],
   ["治","trị, chữa","ジ / チ","なお-る","政治|せいじ|chính trị","N3"],
   ["経","trải qua, kinh","ケイ","へ-る","経済|けいざい|kinh tế","N3"],
@@ -147,4 +149,4 @@ export const KANJI_N3: string[][] = [
   ["夢","giấc mơ","ム","ゆめ","夢|ゆめ|giấc mơ","N3"],
   ["象","tượng, voi","ショウ","","印象|いんしょう|ấn tượng","N3"],
   ["印","ấn, dấu","イン","しるし","印象|いんしょう|ấn tượng","N3"],
-];
+], "kanji N3");

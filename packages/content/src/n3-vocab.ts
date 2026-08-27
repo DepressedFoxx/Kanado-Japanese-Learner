@@ -3,7 +3,9 @@
  *
  * Định dạng giống N5/N4V: [nhãn nhóm, [[chữ viết, cách đọc, romaji, nghĩa]]]
  */
-export const VOCAB_N3: [string, string[][]][] = [
+import { validateVocabGroups } from "./validate";
+
+export const VOCAB_N3: [string, string[][]][] = validateVocabGroups([
   ["Xã hội &amp; thời sự", [
     ["社会","しゃかい","shakai","xã hội"],
     ["政治","せいじ","seiji","chính trị"],
@@ -118,4 +120,4 @@ export const VOCAB_N3: [string, string[][]][] = [
     ["まさか","まさか","masaka","chẳng lẽ, không ngờ"],
     ["ほとんど","ほとんど","hotondo","hầu hết, hầu như không"],
   ]],
-];
+], "từ vựng N3");

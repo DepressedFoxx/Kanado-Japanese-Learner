@@ -7,7 +7,9 @@
  *
  * Định dạng giống GRAMMAR/GRAMMAR4: [mẫu, nghĩa, ghi chú, [[câu Nhật, dịch]]]
  */
-export const GRAMMAR_N3: (string | string[][])[][] = [
+import { validateGrammarRows } from "./validate";
+
+export const GRAMMAR_N3: (string | string[][])[][] = validateGrammarRows([
   ["～について","về, xoay quanh","Dùng khi nội dung nói/nghĩ/viết xoay quanh chủ đề nào đó. Trung tính. Khác ～に対して ở chỗ について là <b>chủ đề</b>, còn に対して là <b>đối tượng hướng tới</b>.",
    [["日本の文化について研究しています。","Tôi đang nghiên cứu về văn hóa Nhật."]]],
   ["～に対して","đối với, nhằm vào","Chỉ đối tượng mà thái độ hay hành động hướng tới. Còn nghĩa thứ hai là đối lập: A に対して B nghĩa là ngược lại với A thì B.",
@@ -140,4 +142,4 @@ export const GRAMMAR_N3: (string | string[][])[][] = [
    [["辛い物も食べないことはない。","Đồ cay thì cũng không phải là không ăn được."]]],
   ["～に決まっている","chắc chắn là (chủ quan)","Người nói tin chắc, nhưng là niềm tin chủ quan chứ không có căn cứ rõ như に違いない.",
    [["こんな時間に電話するなんて、寝ているに決まっている。","Gọi giờ này thì chắc chắn người ta đang ngủ rồi."]]],
-];
+], "ngữ pháp N3");

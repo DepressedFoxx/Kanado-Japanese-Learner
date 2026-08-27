@@ -2,7 +2,12 @@ import { buildCoverageN3 } from "./plan-n3";
 import { GBANK_N3 } from "./n3-cloze";
 import { GRAMMAR_N3 } from "./n3-grammar";
 import { KANJI_N3 } from "./n3-kanji";
+import { KANJI_N3_B } from "./n3-kanji-2";
+import { KANJI_N3_C } from "./n3-kanji-3";
+import { KANJI_N3_D } from "./n3-kanji-4";
+import { KANJI_N3_E } from "./n3-kanji-5";
 import { VOCAB_N3 } from "./n3-vocab";
+import { VOCAB_N3_B } from "./n3-vocab-2";
 import { createRomajiConverter } from "./romaji";
 import * as raw from "./raw";
 import type {
@@ -133,6 +138,7 @@ export const vocabGroups: VocabGroup[] = [
   ...toVocabGroups(raw.N5, "N5", "n5"),
   ...toVocabGroups(raw.N4V, "N4", "n4"),
   ...toVocabGroups(VOCAB_N3, "N3", "n3v"),
+  ...toVocabGroups(VOCAB_N3_B, "N3", "n3w"),
 ];
 
 export const vocab: VocabEntry[] = vocabGroups.flatMap((g) => g.items);
@@ -153,7 +159,7 @@ export const toRomaji = createRomajiConverter(kana);
 export const kanji: KanjiEntry[] = (() => {
   const seen = new Set<string>();
   const list: KanjiEntry[] = [];
-  for (const [char, meaning, on, kun, example, level] of [...raw.KANJI, ...KANJI_N3]) {
+  for (const [char, meaning, on, kun, example, level] of [...raw.KANJI, ...KANJI_N3, ...KANJI_N3_B, ...KANJI_N3_C, ...KANJI_N3_D, ...KANJI_N3_E]) {
     if (seen.has(char)) continue;
     seen.add(char);
     const [word, reading, exMeaning] = example.split("|");
