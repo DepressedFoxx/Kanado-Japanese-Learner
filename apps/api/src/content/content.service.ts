@@ -4,13 +4,17 @@ import {
   confusablePairs,
   conjugation,
   coverage,
+  coverageN3,
   decks,
   deckCards,
   grammarByLevel,
   kanaChart,
   kanjiByLevel,
+  foundations,
   planSteps,
+  planStepsN3,
   resources,
+  resourcesN3,
   vocabGroups,
   type Level,
 } from "@kanado/content";
@@ -37,7 +41,7 @@ export class ContentService {
   }
 
   grammar(level: LevelFilter) {
-    return { points: grammarByLevel(level), conjugation };
+    return { points: grammarByLevel(level), conjugation, foundations };
   }
 
   cloze(level: LevelFilter) {
@@ -53,6 +57,11 @@ export class ContentService {
   }
 
   plan() {
-    return { steps: planSteps, resources, coverage };
+    return {
+      steps: planSteps,
+      resources,
+      coverage,
+      n3: { steps: planStepsN3, resources: resourcesN3, coverage: coverageN3 },
+    };
   }
 }

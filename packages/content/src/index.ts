@@ -1,3 +1,5 @@
+import { buildCoverageN3 } from "./plan-n3";
+import { createRomajiConverter } from "./romaji";
 import * as raw from "./raw";
 import type {
   ClozeQuestion,
@@ -140,6 +142,9 @@ export function vocabByLevel(level: Level | "both"): VocabEntry[] {
  * Kanji
  * ------------------------------------------------------------------ */
 
+/** Chuyển kana sang romaji gõ được — dùng chung cho kanji và các chỗ khác. */
+export const toRomaji = createRomajiConverter(kana);
+
 export const kanji: KanjiEntry[] = (() => {
   const seen = new Set<string>();
   const list: KanjiEntry[] = [];
@@ -151,8 +156,15 @@ export const kanji: KanjiEntry[] = (() => {
       char,
       meaning,
       on,
+      onRomaji: toRomaji(on),
       kun,
-      example: { word, reading, meaning: exMeaning },
+      kunRomaji: toRomaji(kun),
+      example: {
+        word,
+        reading,
+        readingRomaji: toRomaji(reading),
+        meaning: exMeaning,
+      },
       level: level as Level,
     });
   }
@@ -235,6 +247,9 @@ export const resources: Resource[] = raw.RESOURCES.map(([area, items, note]) => 
 /** Mục tiêu JLPT N4 để so với lượng nội dung app đang có. */
 export const N4_TARGET = { kanji: 300, vocab: 1500, grammar: 150, listening: 60 } as const;
 
+export { N3_TARGET, planStepsN3, resourcesN3 } from "./plan-n3";
+export { foundations, type FoundationTopic } from "./foundations";
+
 export const coverage: CoverageRow[] = [
   {
     label: "Bảng chữ hiragana + katakana",
@@ -252,6 +267,13 @@ export const coverage: CoverageRow[] = [
     note: "điểm nghe — app không dạy được, phải dùng tài liệu ngoài",
   },
 ];
+
+/** Cùng cách đo nhưng theo mục tiêu N3 — chặng sau khi đã có N4. */
+export const coverageN3: CoverageRow[] = buildCoverageN3(
+  kanji.length,
+  vocab.length,
+  grammar.filter((g) => (g.level as string) === "N3").length,
+);
 
 /* ------------------------------------------------------------------ *
  * Bộ thẻ flashcard
@@ -354,9 +376,15 @@ export function deckCards(deckId: string): DeckCard[] {
         front: k.char,
         reading: k.example.reading,
         meaning: k.meaning,
-        on: k.on,
-        kun: k.kun,
-        examples: [{ jp: `${k.example.word}（${k.example.reading}）`, vn: k.example.meaning }],
+        romaji: k.example.readingRomaji,
+        on: k.on ? `${k.on}${k.onRomaji ? ` (${k.onRomaji})` : ""}` : "",
+        kun: k.kun ? `${k.kun}${k.kunRomaji ? ` (${k.kunRomaji})` : ""}` : "",
+        examples: [
+          {
+            jp: `${k.example.word}（${k.example.reading}）`,
+            vn: `${k.example.readingRomaji} — ${k.example.meaning}`,
+          },
+        ],
       }));
   }
 

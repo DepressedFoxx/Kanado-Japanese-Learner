@@ -49,14 +49,22 @@ export interface VocabGroup {
 export interface KanjiExample {
   word: string;
   reading: string;
+  /** romaji gõ được — chính là chuỗi phím bấm trên bàn phím tiếng Nhật */
+  readingRomaji: string;
   meaning: string;
 }
 
 export interface KanjiEntry {
   char: string;
   meaning: string;
+  /** âm On, viết bằng katakana theo quy ước từ điển */
   on: string;
+  /** âm On dạng romaji, để đọc và để gõ */
+  onRomaji: string;
+  /** âm Kun, viết bằng hiragana */
   kun: string;
+  /** âm Kun dạng romaji */
+  kunRomaji: string;
   example: KanjiExample;
   level: Level;
 }

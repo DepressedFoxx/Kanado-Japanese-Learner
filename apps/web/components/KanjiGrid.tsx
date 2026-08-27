@@ -69,10 +69,17 @@ export function KanjiGrid() {
                 <span className="lv">{item.level}</span>
               </div>
               <div className="yomi">
-                <b>ON</b> {item.on || "—"} &nbsp; <b>KUN</b> {item.kun || "—"}
+                <b>ON</b> {item.on || "—"}
+                {item.onRomaji && <span className="rj"> {item.onRomaji}</span>}
+              </div>
+              <div className="yomi">
+                <b>KUN</b> {item.kun || "—"}
+                {item.kunRomaji && <span className="rj"> {item.kunRomaji}</span>}
               </div>
               <div className="ex">
-                <span className="exw jp">{item.example.word}</span> {item.example.reading} —{" "}
+                <span className="exw jp">{item.example.word}</span> {item.example.reading}
+                <span className="rj"> {item.example.readingRomaji}</span>
+                <br />
                 {item.example.meaning}
               </div>
             </button>

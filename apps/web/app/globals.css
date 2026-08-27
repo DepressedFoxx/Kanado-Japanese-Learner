@@ -173,7 +173,7 @@ input[type=text]:focus{outline:none;border-color:var(--accent)}
 .done{text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
 
 /* kanji */
-.kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:8px}
+.kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(186px,1fr));gap:8px}
 .kc{border:1px solid var(--line-soft);border-radius:8px;background:var(--surface);padding:11px 12px;display:flex;flex-direction:column;gap:3px;text-align:left}
 .kc:hover{border-color:var(--accent)}
 .kc .top{display:flex;align-items:baseline;gap:9px}
@@ -289,3 +289,13 @@ a:hover { text-decoration: underline; }
 nav a { text-decoration: none; }
 nav a:hover { text-decoration: none; }
 .brand:hover { text-decoration: none; }
+
+/* phiên âm romaji trên thẻ kanji — cũng chính là chuỗi phím gõ trên IME */
+.rj {
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color: var(--accent);
+  font-size: .92em;
+}
+.kc .yomi { line-height: 1.5; }
+.kc .ex { line-height: 1.55; }
+.face .romaji .rj { color: var(--accent); }

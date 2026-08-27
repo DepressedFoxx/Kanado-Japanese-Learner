@@ -1,14 +1,60 @@
 "use client";
 
-import { coverage, planSteps, resources } from "@kanado/content";
+import {
+  coverage,
+  coverageN3,
+  planSteps,
+  planStepsN3,
+  resources,
+  resourcesN3,
+  type CoverageRow,
+  type PlanStep,
+  type Resource,
+} from "@kanado/content";
+import { useState } from "react";
+
+type Stage = "n4" | "n3";
 
 export function PlanView() {
+  const [stage, setStage] = useState<Stage>("n4");
+  const isN4 = stage === "n4";
+
+  const steps: PlanStep[] = isN4 ? planSteps : planStepsN3;
+  const rows: CoverageRow[] = isN4 ? coverage : coverageN3;
+  const books: Resource[] = isN4 ? resources : resourcesN3;
+
   return (
     <>
+      <div className="toolbar">
+        <button className="chip" aria-pressed={isN4} onClick={() => setStage("n4")}>
+          Chặng 1 · Bảng chữ → N4
+        </button>
+        <button className="chip" aria-pressed={!isN4} onClick={() => setStage("n3")}>
+          Chặng 2 · N4 → N3
+        </button>
+      </div>
+
+      <p className="lede">
+        {isN4 ? (
+          <>
+            Từ chỗ vừa xong hiragana tới đủ sức thi N4 là khoảng{" "}
+            <b>9–12 tháng nếu học 1 giờ/ngày</b>, hoặc <b>6–7 tháng nếu học 2 giờ/ngày</b> và không
+            bỏ ngày.
+          </>
+        ) : (
+          <>
+            Chặng này nặng gấp đôi chặng trước: <b>8–12 tháng ở nhịp 1 giờ/ngày</b>. Kanji tăng từ
+            300 lên khoảng 650, từ vựng từ 1.500 lên khoảng 3.750. Chỉ bắt đầu khi N4 đã thật chắc.
+          </>
+        )}
+      </p>
+
       <div className="card">
-        <h3>Trang này phủ được bao nhiêu chặng đường</h3>
+        <h3>
+          {isN4 ? "App phủ được bao nhiêu chặng đường" : "App phủ được bao nhiêu cho N3"}
+        </h3>
         <div className="cover">
-          {coverage.map((row) => {
+          {rows.map((row) => {
             const percent = Math.min(100, Math.round((row.have / row.need) * 100));
             const empty = percent === 0;
             return (
@@ -22,20 +68,32 @@ export function PlanView() {
                   </b>
                 </div>
                 <div className="ctrack">
-                  <i className={empty ? "none" : ""} style={{ width: `${empty ? 100 : percent}%` }} />
+                  <i
+                    className={empty ? "none" : ""}
+                    style={{ width: `${empty ? 100 : percent}%` }}
+                  />
                 </div>
               </div>
             );
           })}
         </div>
         <p style={{ fontSize: 13 }}>
-          Thanh xám là yêu cầu của N4, thanh xanh là phần app này có sẵn. Chỗ còn thiếu phải lấy từ
-          giáo trình và tài liệu nghe bên dưới — không có cách vòng.
+          {isN4 ? (
+            <>
+              Thanh xám là yêu cầu của N4, thanh xanh là phần app này có sẵn. Chỗ còn thiếu phải lấy
+              từ giáo trình và tài liệu nghe bên dưới — không có cách vòng.
+            </>
+          ) : (
+            <>
+              Ở chặng N3, app gần như chỉ còn là chỗ ôn lại nền N5–N4. Nội dung N3 phải lấy hoàn
+              toàn từ giáo trình và tài liệu thật. Thanh đỏ là mảng app không dạy được.
+            </>
+          )}
         </p>
       </div>
 
       <div className="card steps">
-        {planSteps.map((step) => (
+        {steps.map((step) => (
           <div className="step" key={step.milestone + step.title}>
             <div className="d">{step.milestone}</div>
             <div>
@@ -57,7 +115,7 @@ export function PlanView() {
                 <th>Tài liệu</th>
                 <th>Ghi chú</th>
               </tr>
-              {resources.map((resource) => (
+              {books.map((resource) => (
                 <tr key={resource.area}>
                   <td>
                     <b>{resource.area}</b>
@@ -71,51 +129,82 @@ export function PlanView() {
         </div>
       </div>
 
-      <div className="card">
-        <h3>Khung một giờ mỗi ngày — giữ nguyên suốt cả chặng</h3>
-        <div className="glist" style={{ fontSize: 14, color: "var(--ink-2)" }}>
-          <div>
-            <b style={{ color: "var(--ink)" }}>20 phút flashcard</b> — chạy hết thẻ đến hạn ở mọi bộ
-            đang mở. Nghỉ hai ngày là số thẻ dồn gấp đôi.
+      {isN4 ? (
+        <>
+          <div className="card">
+            <h3>Khung một giờ mỗi ngày — giữ nguyên suốt cả chặng</h3>
+            <div className="glist" style={{ fontSize: 14, color: "var(--ink-2)" }}>
+              <div>
+                <b style={{ color: "var(--ink)" }}>20 phút flashcard</b> — chạy hết thẻ đến hạn ở
+                mọi bộ đang mở. Nghỉ hai ngày là số thẻ dồn gấp đôi.
+              </div>
+              <div>
+                <b style={{ color: "var(--ink)" }}>20 phút giáo trình</b> — nửa bài Minna no
+                Nihongo, gồm cả phần bài tập.
+              </div>
+              <div>
+                <b style={{ color: "var(--ink)" }}>20 phút nghe</b> — từ tháng thứ 6 trở đi. Trước
+                đó dùng 20 phút này cho kanji.
+              </div>
+              <div>
+                <b style={{ color: "var(--ink)" }}>Mỗi Chủ nhật</b> — một đề ở tab Kiểm tra, đúng
+                cấp độ đang học, 30 câu.
+              </div>
+            </div>
           </div>
-          <div>
-            <b style={{ color: "var(--ink)" }}>20 phút giáo trình</b> — nửa bài Minna no Nihongo, gồm
-            cả phần bài tập.
-          </div>
-          <div>
-            <b style={{ color: "var(--ink)" }}>20 phút nghe</b> — từ tháng thứ 6 trở đi. Trước đó
-            dùng 20 phút này cho kanji.
-          </div>
-          <div>
-            <b style={{ color: "var(--ink)" }}>Mỗi Chủ nhật</b> — một đề ở tab Kiểm tra, đúng cấp độ
-            đang học, 30 câu.
-          </div>
-        </div>
-      </div>
 
-      <div className="card">
-        <h3>Gõ tiếng Nhật trên Windows</h3>
-        <div className="glist" style={{ fontSize: 14, color: "var(--ink-2)" }}>
-          <div>
-            <b style={{ color: "var(--ink)" }}>Cài</b> — Settings → Time &amp; language → Language
-            &amp; region → Add a language → Japanese. Chuyển bàn phím bằng <b>Win + Space</b>.
+          <div className="card">
+            <h3>Gõ tiếng Nhật trên Windows</h3>
+            <div className="glist" style={{ fontSize: 14, color: "var(--ink-2)" }}>
+              <div>
+                <b style={{ color: "var(--ink)" }}>Cài</b> — Settings → Time &amp; language →
+                Language &amp; region → Add a language → Japanese. Chuyển bàn phím bằng{" "}
+                <b>Win + Space</b>.
+              </div>
+              <div>
+                <b style={{ color: "var(--ink)" }}>Gõ</b> — bật chế độ あ, gõ romaji ra hiragana:{" "}
+                <span className="mono">ka-i-sha</span> → かいしゃ. <b>Space</b> đổi sang kanji,{" "}
+                <b>Enter</b> chốt.
+              </div>
+              <div>
+                <b style={{ color: "var(--ink)" }}>Katakana</b> — gõ xong nhấn <b>F7</b> là chuyển
+                ngay sang katakana.
+              </div>
+              <div>
+                <b style={{ color: "var(--ink)" }}>Mẹo gõ</b> — ん gõ <span className="mono">nn</span>
+                , chữ nhỏ っ gõ bằng cách lặp phụ âm (<span className="mono">kitte</span> → きって), ー
+                gõ bằng phím gạch ngang.
+              </div>
+            </div>
           </div>
-          <div>
-            <b style={{ color: "var(--ink)" }}>Gõ</b> — bật chế độ あ, gõ romaji ra hiragana:{" "}
-            <span className="mono">ka-i-sha</span> → かいしゃ. <b>Space</b> đổi sang kanji,{" "}
-            <b>Enter</b> chốt.
-          </div>
-          <div>
-            <b style={{ color: "var(--ink)" }}>Katakana</b> — gõ xong nhấn <b>F7</b> là chuyển ngay
-            sang katakana.
-          </div>
-          <div>
-            <b style={{ color: "var(--ink)" }}>Mẹo gõ</b> — ん gõ <span className="mono">nn</span>,
-            chữ nhỏ っ gõ bằng cách lặp phụ âm (<span className="mono">kitte</span> → きって), ー gõ
-            bằng phím gạch ngang.
+        </>
+      ) : (
+        <div className="card">
+          <h3>Khung một giờ mỗi ngày ở chặng N3</h3>
+          <div className="glist" style={{ fontSize: 14, color: "var(--ink-2)" }}>
+            <div>
+              <b style={{ color: "var(--ink)" }}>15 phút kanji và từ vựng</b> — 5 chữ mới, 20-25 từ
+              mới, học theo từ ghép và theo câu chứ không theo danh sách rời.
+            </div>
+            <div>
+              <b style={{ color: "var(--ink)" }}>15 phút ngữ pháp</b> — một mẫu mới, và quan trọng
+              hơn: so nó với các mẫu gần nghĩa đã học.
+            </div>
+            <div>
+              <b style={{ color: "var(--ink)" }}>15 phút đọc</b> — một bài NHK News Web Easy. Đọc
+              hết bài rồi mới tra từ, đừng tra giữa chừng.
+            </div>
+            <div>
+              <b style={{ color: "var(--ink)" }}>15 phút nghe</b> — chép chính tả một đoạn ngắn có
+              script, rồi shadowing chính đoạn đó.
+            </div>
+            <div>
+              App này ở chặng N3 chỉ dùng để giữ nền N5–N4 khỏi rơi rụng: chạy flashcard đến hạn mỗi
+              ngày, mỗi tuần một đề Tổng hợp.
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 }
