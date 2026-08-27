@@ -43,6 +43,10 @@ async function seedKanji() {
         exampleReading: k.example.reading,
         exampleMeaning: k.example.meaning,
         level: k.level,
+        source: k.source,
+        hanViet: k.hanViet ?? null,
+        strokes: k.strokes ?? null,
+        frequency: k.frequency ?? null,
       },
       create: {
         char: k.char,
@@ -53,6 +57,10 @@ async function seedKanji() {
         exampleReading: k.example.reading,
         exampleMeaning: k.example.meaning,
         level: k.level,
+        source: k.source,
+        hanViet: k.hanViet ?? null,
+        strokes: k.strokes ?? null,
+        frequency: k.frequency ?? null,
       },
     });
   }
@@ -62,30 +70,24 @@ async function seedKanji() {
 async function seedVocab() {
   let count = 0;
   for (const group of vocabGroups) {
-    for (const item of group.items) {
-      await prisma.vocabItem.upsert({
-        where: { groupId_word: { groupId: group.id, word: item.word } },
-        update: {
-          groupLabel: group.label,
-          level: group.level,
-          reading: item.reading,
-          romaji: item.romaji,
-          meaning: item.meaning,
-          isKatakana: item.katakana,
-        },
-        create: {
-          groupId: group.id,
-          groupLabel: group.label,
-          level: group.level,
-          word: item.word,
-          reading: item.reading,
-          romaji: item.romaji,
-          meaning: item.meaning,
-          isKatakana: item.katakana,
-        },
-      });
-      count++;
-    }
+    // createMany + skipDuplicates nhanh hơn upsert nhiều lần, quan trọng vì
+    // giờ có hơn 3.600 từ và Neon ở xa nên mỗi round trip tốn ~70ms.
+    const rows = group.items.map((item, position) => ({
+      groupId: group.id,
+      groupLabel: group.label,
+      level: group.level,
+      word: item.word,
+      reading: item.reading,
+      romaji: item.romaji,
+      meaning: item.meaning,
+      isKatakana: item.katakana,
+      source: item.source,
+      position,
+    }));
+
+    await prisma.vocabItem.deleteMany({ where: { groupId: group.id } });
+    await prisma.vocabItem.createMany({ data: rows });
+    count += rows.length;
   }
   return count;
 }
@@ -130,6 +132,35 @@ async function seedCloze() {
   return clozeQuestions.length;
 }
 
+/**
+ * Xoá bản ghi không còn trong nội dung hiện tại.
+ *
+ * Nếu chỉ upsert thì chữ hay từ đã bị loại khỏi package vẫn nằm lại trong DB,
+ * và vì web giờ đọc nội dung từ DB nên người học sẽ thấy cả những mục lẽ ra
+ * đã bỏ. Bước này giữ DB đúng bằng nội dung, không hơn.
+ */
+async function pruneStale() {
+  const [kanjiGone, vocabGone, grammarGone, clozeGone, kanaGone] = await Promise.all([
+    prisma.kanji.deleteMany({ where: { char: { notIn: kanji.map((k) => k.char) } } }),
+    prisma.vocabItem.deleteMany({
+      where: { groupId: { notIn: vocabGroups.map((g) => g.id) } },
+    }),
+    prisma.grammarPoint.deleteMany({
+      where: { pattern: { notIn: grammar.map((g) => g.pattern) } },
+    }),
+    prisma.clozeQuestion.deleteMany({
+      where: { sentence: { notIn: clozeQuestions.map((q) => q.sentence) } },
+    }),
+    prisma.kanaCharacter.deleteMany({
+      where: { katakana: { notIn: kana.map((k) => k.katakana) } },
+    }),
+  ]);
+
+  const total =
+    kanjiGone.count + vocabGone.count + grammarGone.count + clozeGone.count + kanaGone.count;
+  return total;
+}
+
 async function main() {
   console.log("Đang nạp nội dung vào Postgres…");
   console.log("  bảng chữ    :", await seedKana());
@@ -137,6 +168,8 @@ async function main() {
   console.log("  từ vựng     :", await seedVocab());
   console.log("  ngữ pháp    :", await seedGrammar());
   console.log("  câu hỏi đề  :", await seedCloze());
+  const pruned = await pruneStale();
+  if (pruned) console.log("  đã dọn      :", pruned, "bản ghi cũ không còn trong nội dung");
   console.log("Xong.");
 }
 

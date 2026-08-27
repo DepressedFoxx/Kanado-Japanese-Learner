@@ -1,7 +1,8 @@
 "use client";
 
-import { deckCards, decks, type DeckCard } from "@kanado/content";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type DeckCard } from "@kanado/content";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ContentStatusNote, useDeckCards, useDecks } from "@/lib/content";
 import { speak } from "@/lib/speech";
 import { today, useProgress } from "@/lib/store";
 import { shuffle } from "@/lib/utils";
@@ -13,15 +14,15 @@ type Direction = "jp" | "vn";
 export function Flashcard() {
   const { srs, gradeCard } = useProgress();
 
+  const { data: decks } = useDecks();
   const [deckId, setDeckId] = useState("kata");
+  const { data: cards, status } = useDeckCards(deckId);
   const [direction, setDirection] = useState<Direction>("jp");
   const [queue, setQueue] = useState<DeckCard[]>([]);
   const [flipped, setFlipped] = useState(false);
 
   const srsRef = useRef(srs);
   srsRef.current = srs;
-
-  const cards = useMemo(() => deckCards(deckId), [deckId]);
 
   const buildQueue = useCallback(() => {
     const day = today();
@@ -113,6 +114,7 @@ export function Flashcard() {
             </button>
           ))}
         </div>
+        <ContentStatusNote status={status} />
         <h3>Chiều hỏi</h3>
         <div className="toolbar">
           <button

@@ -162,10 +162,16 @@ const CHUNK_SIZE = 100;
 const importedVocabGroups: VocabGroup[] = (() => {
   const groups: VocabGroup[] = [];
 
+  // Nguồn có vài từ lặp lại (cùng chữ, khác cách đọc hoặc nghĩa gần giống).
+  // Giữ bản đầu tiên: người học không cần thấy hai thẻ y hệt nhau.
+  const takenWords = new Set(handWrittenWords);
+
   for (const level of ["N5", "N4", "N3"] as Level[]) {
-    const items = IMPORTED_VOCAB.filter(
-      (v) => v.l === level && !handWrittenWords.has(v.w),
-    ).map<VocabEntry>((v) => ({
+    const items = IMPORTED_VOCAB.filter((v) => {
+      if (v.l !== level || takenWords.has(v.w)) return false;
+      takenWords.add(v.w);
+      return true;
+    }).map<VocabEntry>((v) => ({
       word: v.w,
       reading: v.r,
       romaji: toRomaji(v.r),

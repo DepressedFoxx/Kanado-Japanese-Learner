@@ -1,14 +1,16 @@
 "use client";
 
 import {
-  clozeByLevel,
   kana,
   kanaKey,
-  kanjiByLevel,
-  vocabByLevel,
+  type ClozeQuestion,
+  type KanjiEntry,
   type Level,
+  type VocabEntry,
+  type VocabGroup,
 } from "@kanado/content";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useContentLoader } from "@/lib/content";
 import { useProgress } from "@/lib/store";
 import { formatDateTime, formatTime, shuffle, unique } from "@/lib/utils";
 
@@ -92,8 +94,7 @@ function makeKanaQuestion(): Question {
   };
 }
 
-function makeVocabQuestion(level: LevelFilter): Question {
-  const list = vocabByLevel(level);
+function makeVocabQuestion(list: VocabEntry[]): Question {
   const item = list[Math.floor(Math.random() * list.length)];
   const others = list.filter((v) => v.meaning !== item.meaning && v.word !== item.word);
   const detail = `${item.word}${item.katakana ? "" : `（${item.reading}）`} — ${item.romaji} — ${item.meaning}.`;
@@ -123,8 +124,7 @@ function makeVocabQuestion(level: LevelFilter): Question {
   };
 }
 
-function makeKanjiQuestion(level: LevelFilter): Question {
-  const list = kanjiByLevel(level);
+function makeKanjiQuestion(list: KanjiEntry[]): Question {
   const item = list[Math.floor(Math.random() * list.length)];
   const others = list.filter((k) => k.char !== item.char);
   const detail = `${item.char} — ${item.meaning} · ON ${item.on || "—"} · KUN ${item.kun || "—"} · ${item.example.word}（${item.example.reading}）${item.example.meaning}.`;
@@ -171,7 +171,7 @@ function makeKanjiQuestion(level: LevelFilter): Question {
   };
 }
 
-function makeGrammarQuestion(source: ReturnType<typeof clozeByLevel>[number]): Question {
+function makeGrammarQuestion(source: ClozeQuestion): Question {
   return {
     kind: "grammar",
     eyebrow: "Điền vào chỗ trống",
@@ -185,10 +185,21 @@ function makeGrammarQuestion(source: ReturnType<typeof clozeByLevel>[number]): Q
   };
 }
 
-function buildTest(type: TestType, count: number, level: LevelFilter): Question[] {
+interface ContentPools {
+  kanji: KanjiEntry[];
+  vocab: VocabEntry[];
+  cloze: ClozeQuestion[];
+}
+
+function buildTest(
+  type: TestType,
+  count: number,
+  level: LevelFilter,
+  pools: ContentPools,
+): Question[] {
   const questions: Question[] = [];
   const seen = new Set<string>();
-  const grammarBag = shuffle(clozeByLevel(level));
+  const grammarBag = shuffle(pools.cloze);
   let guard = 0;
 
   while (questions.length < count && guard++ < 600) {
@@ -197,8 +208,8 @@ function buildTest(type: TestType, count: number, level: LevelFilter): Question[
 
     let question: Question;
     if (kind === "kana") question = makeKanaQuestion();
-    else if (kind === "vocab") question = makeVocabQuestion(level);
-    else if (kind === "kanji") question = makeKanjiQuestion(level);
+    else if (kind === "vocab") question = makeVocabQuestion(pools.vocab);
+    else if (kind === "kanji") question = makeKanjiQuestion(pools.kanji);
     else {
       const source = grammarBag.pop();
       if (!source) break;
@@ -219,8 +230,27 @@ function buildTest(type: TestType, count: number, level: LevelFilter): Question[
   return questions;
 }
 
+/** Lọc theo cấp, giữ nguyên phần katakana vì nó không thuộc cấp nào. */
+function poolsForLevel(
+  level: LevelFilter,
+  kanji: KanjiEntry[],
+  vocabGroups: VocabGroup[],
+  cloze: ClozeQuestion[],
+): ContentPools {
+  return {
+    kanji: level === "both" ? kanji : kanji.filter((k) => k.level === level),
+    vocab: vocabGroups
+      .filter((g) => level === "both" || g.level === level || g.level === "kana")
+      .flatMap((g) => g.items),
+    cloze: level === "both" ? cloze : cloze.filter((q) => q.level === level),
+  };
+}
+
 export function TestRunner() {
   const { attempts, addAttempt, recordKana } = useProgress();
+  const loadContent = useContentLoader();
+  const [pools, setPools] = useState<ContentPools | null>(null);
+  const [preparing, setPreparing] = useState(false);
 
   const [type, setType] = useState<TestType>("kana");
   const [level, setLevel] = useState<LevelFilter>("N5");
@@ -244,8 +274,18 @@ export function TestRunner() {
   }, [phase]);
 
   const start = useCallback(
-    (preset?: Question[]) => {
-      const built = preset ?? buildTest(type, count, level);
+    async (preset?: Question[]) => {
+      let built = preset;
+
+      if (!built) {
+        setPreparing(true);
+        const content = await loadContent();
+        const ready = poolsForLevel(level, content.kanji, content.vocabGroups, content.cloze);
+        setPools(ready);
+        built = buildTest(type, count, level, ready);
+        setPreparing(false);
+      }
+
       if (!built.length) return;
       setQuestions(built.map((q) => ({ ...q, options: shuffle(q.options) })));
       setIndex(0);
@@ -254,7 +294,7 @@ export function TestRunner() {
       startedAt.current = Date.now();
       setPhase("running");
     },
-    [type, count, level],
+    [type, count, level, loadContent],
   );
 
   function choose(option: string) {
@@ -295,13 +335,14 @@ export function TestRunner() {
   );
   const percent = questions.length ? Math.round((correctCount / questions.length) * 100) : 0;
 
-  const poolSize =
-    type === "grammar"
-      ? `${clozeByLevel(level).length} câu trong ngân hàng đề.`
+  const poolSize = !pools
+    ? ""
+    : type === "grammar"
+      ? `${pools.cloze.length} câu trong ngân hàng đề.`
       : type === "kanji"
-        ? `${kanjiByLevel(level).length} chữ trong bộ.`
+        ? `${pools.kanji.length} chữ trong bộ.`
         : type === "vocab"
-          ? `${vocabByLevel(level).length} từ trong bộ.`
+          ? `${pools.vocab.length} từ trong bộ.`
           : "";
 
   const best = useMemo(() => {
@@ -360,8 +401,8 @@ export function TestRunner() {
           </div>
 
           <div className="toolbar">
-            <button className="btn" onClick={() => start()}>
-              Bắt đầu làm bài
+            <button className="btn" onClick={() => void start()} disabled={preparing}>
+              {preparing ? "Đang chuẩn bị đề…" : "Bắt đầu làm bài"}
             </button>
             <span style={{ fontSize: "13px", color: "var(--ink-3)" }}>
               {TYPE_DESC[type]} {poolSize}
@@ -434,12 +475,12 @@ export function TestRunner() {
                   : "Chưa vững — quay lại Flashcard và Luyện bảng chữ trước khi thi lại."}
             </div>
             <div className="toolbar" style={{ justifyContent: "center" }}>
-              <button className="btn" onClick={() => start()}>
-                Làm lại đề này
+              <button className="btn" onClick={() => void start()} disabled={preparing}>
+                {preparing ? "Đang chuẩn bị…" : "Làm lại đề này"}
               </button>
               <button
                 className="chip"
-                onClick={() => wrongRef.current.length && start(wrongRef.current)}
+                onClick={() => wrongRef.current.length && void start(wrongRef.current)}
               >
                 Làm lại câu sai
               </button>

@@ -103,8 +103,8 @@ model TestAttempt {
 // ------------------------------------------------------------------
 
 model Kanji {
-  id             Int    @id @default(autoincrement())
-  char           String @unique
+  id             Int     @id @default(autoincrement())
+  char           String  @unique
   meaning        String
   onyomi         String
   kunyomi        String
@@ -112,13 +112,20 @@ model Kanji {
   exampleReading String
   exampleMeaning String
   level          String
+  /// "vi" = soạn tay có nghĩa tiếng Việt, "imported" = nhập từ từ điển, nghĩa tiếng Anh
+  source         String  @default("vi")
+  /// âm Hán Việt lấy từ KANJIDIC2
+  hanViet        String?
+  strokes        Int?
+  /// thứ hạng độ thường gặp, càng nhỏ càng hay gặp
+  frequency      Int?
 
   @@index([level])
   @@map("kanji")
 }
 
 model VocabItem {
-  id         Int    @id @default(autoincrement())
+  id         Int     @id @default(autoincrement())
   groupId    String
   groupLabel String
   level      String
@@ -127,6 +134,10 @@ model VocabItem {
   romaji     String
   meaning    String
   isKatakana Boolean @default(false)
+  /// "vi" hoặc "imported" — xem model Kanji
+  source     String  @default("vi")
+  /// thứ tự trong nhóm, để giữ nguyên trật tự khi đọc ra từ DB
+  position   Int     @default(0)
 
   @@unique([groupId, word])
   @@index([level])

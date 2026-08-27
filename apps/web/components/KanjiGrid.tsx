@@ -1,7 +1,8 @@
 "use client";
 
-import { kanji, type Level } from "@kanado/content";
+import { type Level } from "@kanado/content";
 import { useMemo, useState } from "react";
+import { ContentStatusNote, useKanji } from "@/lib/content";
 import { speak } from "@/lib/speech";
 import { useProgress } from "@/lib/store";
 
@@ -9,6 +10,7 @@ type Filter = Level | "all";
 
 export function KanjiGrid() {
   const { srs } = useProgress();
+  const { data: kanji, status } = useKanji();
   const [filter, setFilter] = useState<Filter>("N5");
   const [query, setQuery] = useState("");
 
@@ -28,7 +30,7 @@ export function KanjiGrid() {
         item.example.meaning.toLowerCase().includes(needle)
       );
     });
-  }, [filter, query]);
+  }, [filter, query, kanji]);
 
   const importedCount = list.filter((k) => k.source === "imported").length;
 
@@ -57,6 +59,7 @@ export function KanjiGrid() {
           {list.length} chữ
           {importedCount > 0 && ` · ${importedCount} chữ nghĩa tiếng Anh`}
         </span>
+        <ContentStatusNote status={status} />
       </div>
 
       <div className="kgrid">

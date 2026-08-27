@@ -1,7 +1,8 @@
 "use client";
 
-import { vocabGroups, type Level } from "@kanado/content";
+import { type Level } from "@kanado/content";
 import { useMemo, useState } from "react";
+import { ContentStatusNote, useVocabGroups } from "@/lib/content";
 import { speak } from "@/lib/speech";
 
 type LevelTab = Level | "kana";
@@ -15,8 +16,9 @@ const TABS: { id: LevelTab; label: string }[] = [
 
 export function VocabList() {
   const [tab, setTab] = useState<LevelTab>("kana");
+  const { data: vocabGroups, status } = useVocabGroups();
 
-  const groups = useMemo(() => vocabGroups.filter((g) => g.level === tab), [tab]);
+  const groups = useMemo(() => vocabGroups.filter((g) => g.level === tab), [tab, vocabGroups]);
   const [groupId, setGroupId] = useState<string | null>(null);
 
   const group = groups.find((g) => g.id === groupId) ?? groups[0];
@@ -40,6 +42,7 @@ export function VocabList() {
         <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
           {groups.reduce((sum, g) => sum + g.items.length, 0)} từ trong {groups.length} nhóm
         </span>
+        <ContentStatusNote status={status} />
       </div>
 
       <div className="toolbar">

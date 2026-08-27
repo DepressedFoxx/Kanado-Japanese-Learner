@@ -25,14 +25,24 @@ Kanado-Japanese-Learner/
 └─ docker-compose.yml    Postgres cho môi trường phát triển
 ```
 
-### Vì sao nội dung nằm ở package chứ không gọi API
+### Nội dung đến từ đâu
 
-Dữ liệu học là tĩnh (721 kanji, 3.644 từ, 134 mẫu ngữ pháp). Để trong package thì web
-render tức thì, không chờ mạng, và học được cả khi API chết. API vẫn có đầy đủ endpoint
-`/api/content/*` đọc từ cùng nguồn — dành cho client khác về sau (app điện thoại chẳng hạn) và
-để bạn tra cứu, thống kê, soạn thêm nội dung bằng DBeaver.
+Web lấy nội dung từ **API**, mà API đọc từ **Postgres**. Nghĩa là sửa kanji, từ vựng hay ngữ pháp
+trong DBeaver là web hiện ngay, không cần build lại hay deploy.
 
-API chỉ thật sự cần cho hai việc: **tài khoản** và **đồng bộ tiến độ**.
+Nhưng API chạy trên gói free nên có thể đang ngủ. Vì vậy web vẫn **đóng gói sẵn toàn bộ nội dung
+trong bundle làm bản dự phòng**: mở trang là học được ngay, và khi API trả lời xong thì nội dung
+mới thay vào. API chết hoàn toàn thì app vẫn dùng được, chỉ hiện một dòng báo nhỏ.
+
+Phần khung sườn — bảng chữ, bảng chia động từ, mục Nền tảng, lộ trình — vẫn nằm trong code, vì nó
+gần như không đổi và giữ ở đó thì đỡ một vòng truy vấn mỗi lần mở trang.
+
+Sửa nội dung có hai đường:
+
+1. **Sửa lâu dài** — sửa trong `packages/content/src/` rồi `npm run db:seed`. Đây là nguồn gốc,
+   và seed sẽ xoá những bản ghi không còn trong package.
+2. **Sửa nhanh** — sửa thẳng trong DBeaver, web thấy ngay. Nhưng lần `db:seed` sau sẽ ghi đè,
+   nên chỉ dùng để thử.
 
 ## Chạy lần đầu
 

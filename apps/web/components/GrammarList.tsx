@@ -1,12 +1,14 @@
 "use client";
 
-import { conjugation, foundations, grammar, type Level } from "@kanado/content";
+import { conjugation, foundations, type Level } from "@kanado/content";
 import { useState } from "react";
+import { ContentStatusNote, useGrammar } from "@/lib/content";
 
 type Tab = "base" | Level;
 
 export function GrammarList() {
   const [tab, setTab] = useState<Tab>("base");
+  const { data: grammar, status } = useGrammar();
 
   const counts = {
     N5: grammar.filter((g) => g.level === "N5").length,
@@ -30,6 +32,7 @@ export function GrammarList() {
             {level} · {counts[level]} mẫu
           </button>
         ))}
+        <ContentStatusNote status={status} />
       </div>
 
       {tab === "base" && (

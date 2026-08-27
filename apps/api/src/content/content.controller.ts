@@ -42,8 +42,8 @@ export class ContentController {
   }
 
   @Get("decks/:deckId")
-  deck(@Param("deckId") deckId: string) {
-    const cards = this.content.deck(deckId);
+  async deck(@Param("deckId") deckId: string) {
+    const cards = await this.content.deck(deckId);
     if (!cards.length) throw new BadRequestException("Không có bộ thẻ nào tên " + deckId);
     return cards;
   }
