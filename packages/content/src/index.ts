@@ -1,4 +1,6 @@
 import { buildCoverageN3 } from "./plan-n3";
+import { IMPORTED_KANJI } from "./imported-kanji";
+import { IMPORTED_VOCAB } from "./imported-vocab";
 import { GBANK_N3 } from "./n3-cloze";
 import { GRAMMAR_N3 } from "./n3-grammar";
 import { KANJI_N3 } from "./n3-kanji";
@@ -89,6 +91,9 @@ export const kana: KanaEntry[] = [
   ...extended.entries,
 ];
 
+/** Chuyển kana sang romaji gõ được — dùng chung cho kanji và các chỗ khác. */
+export const toRomaji = createRomajiConverter(kana);
+
 export const confusablePairs: ConfusablePair[] = raw.CONFUSE;
 
 /** Chữ katakana xuất hiện trong danh sách cặp dễ nhầm. */
@@ -111,6 +116,7 @@ const katakanaVocab: VocabEntry[] = raw.VOCAB.map(([word, romaji, meaning]) => (
   romaji,
   meaning,
   katakana: true,
+  source: "vi" as const,
 }));
 
 function toVocabGroups(source: [string, string[][]][], level: Level, prefix: string): VocabGroup[] {
@@ -124,6 +130,7 @@ function toVocabGroups(source: [string, string[][]][], level: Level, prefix: str
       romaji,
       meaning,
       katakana: false,
+      source: "vi" as const,
     })),
   }));
 }
@@ -133,13 +140,59 @@ function decodeEntities(value: string): string {
   return value.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
 }
 
-export const vocabGroups: VocabGroup[] = [
+const handWrittenGroups: VocabGroup[] = [
   { id: "kata", label: "Katakana thường gặp", level: "kana", items: katakanaVocab },
   ...toVocabGroups(raw.N5, "N5", "n5"),
   ...toVocabGroups(raw.N4V, "N4", "n4"),
   ...toVocabGroups(VOCAB_N3, "N3", "n3v"),
   ...toVocabGroups(VOCAB_N3_B, "N3", "n3w"),
 ];
+
+
+/**
+ * Từ vựng nhập từ từ điển, chia thành nhóm 100 từ cho vừa một chặng học.
+ * Từ nào đã có bản soạn tay tiếng Việt thì bỏ qua, không nhập đè.
+ */
+const handWrittenWords = new Set(
+  handWrittenGroups.flatMap((g) => g.items.map((item) => item.word)),
+);
+
+const CHUNK_SIZE = 100;
+
+const importedVocabGroups: VocabGroup[] = (() => {
+  const groups: VocabGroup[] = [];
+
+  for (const level of ["N5", "N4", "N3"] as Level[]) {
+    const items = IMPORTED_VOCAB.filter(
+      (v) => v.l === level && !handWrittenWords.has(v.w),
+    ).map<VocabEntry>((v) => ({
+      word: v.w,
+      reading: v.r,
+      romaji: toRomaji(v.r),
+      meaning: v.m,
+      katakana: v.w === v.r,
+      source: "imported",
+    }));
+
+    for (let i = 0; i < items.length; i += CHUNK_SIZE) {
+      const part = Math.floor(i / CHUNK_SIZE) + 1;
+      groups.push({
+        id: `imp-${level.toLowerCase()}-${part}`,
+        label: `${level} · Kho từ ${part}`,
+        level,
+        items: items.slice(i, i + CHUNK_SIZE),
+      });
+    }
+  }
+
+  return groups;
+})();
+
+/**
+ * Nhóm soạn tay đứng trước để người học gặp nghĩa tiếng Việt trước,
+ * kho nhập từ từ điển đứng sau làm phần mở rộng.
+ */
+export const vocabGroups: VocabGroup[] = [...handWrittenGroups, ...importedVocabGroups];
 
 export const vocab: VocabEntry[] = vocabGroups.flatMap((g) => g.items);
 
@@ -153,19 +206,35 @@ export function vocabByLevel(level: Level | "both"): VocabEntry[] {
  * Kanji
  * ------------------------------------------------------------------ */
 
-/** Chuyển kana sang romaji gõ được — dùng chung cho kanji và các chỗ khác. */
-export const toRomaji = createRomajiConverter(kana);
+/** Tra nhanh dữ liệu từ điển theo chữ, để bổ sung âm Hán Việt và số nét. */
+const importedKanjiByChar = new Map(IMPORTED_KANJI.map((k) => [k.c, k]));
 
 export const kanji: KanjiEntry[] = (() => {
   const seen = new Set<string>();
   const list: KanjiEntry[] = [];
-  for (const [char, meaning, on, kun, example, level] of [...raw.KANJI, ...KANJI_N3, ...KANJI_N3_B, ...KANJI_N3_C, ...KANJI_N3_D, ...KANJI_N3_E]) {
+
+  // 1. Chữ soạn tay: nghĩa tiếng Việt, có từ ví dụ chọn lọc.
+  const handWritten = [
+    ...raw.KANJI,
+    ...KANJI_N3,
+    ...KANJI_N3_B,
+    ...KANJI_N3_C,
+    ...KANJI_N3_D,
+    ...KANJI_N3_E,
+  ];
+
+  for (const [char, meaning, on, kun, example, level] of handWritten) {
     if (seen.has(char)) continue;
     seen.add(char);
     const [word, reading, exMeaning] = example.split("|");
+    const extra = importedKanjiByChar.get(char);
     list.push({
       char,
       meaning,
+      source: "vi",
+      hanViet: extra?.v || undefined,
+      strokes: extra?.s || undefined,
+      frequency: extra?.f,
       on,
       onRomaji: toRomaji(on),
       kun,
@@ -179,6 +248,34 @@ export const kanji: KanjiEntry[] = (() => {
       level: level as Level,
     });
   }
+
+  // 2. Chữ còn thiếu lấy từ từ điển — nghĩa tiếng Anh, không có từ ví dụ.
+  for (const item of IMPORTED_KANJI) {
+    if (seen.has(item.c)) continue;
+    seen.add(item.c);
+    const firstOn = item.o.split(" / ")[0] ?? "";
+    const firstKun = item.k.split(" / ")[0] ?? "";
+    list.push({
+      char: item.c,
+      meaning: item.m,
+      source: "imported",
+      hanViet: item.v || undefined,
+      strokes: item.s || undefined,
+      frequency: item.f,
+      on: item.o,
+      onRomaji: toRomaji(firstOn),
+      kun: item.k,
+      kunRomaji: toRomaji(firstKun.replace(/./g, "-")),
+      example: {
+        word: item.c,
+        reading: firstKun.replace(/..*$/, "") || firstOn,
+        readingRomaji: toRomaji(firstKun.replace(/..*$/, "") || firstOn),
+        meaning: item.m,
+      },
+      level: item.l as Level,
+    });
+  }
+
   return list;
 })();
 

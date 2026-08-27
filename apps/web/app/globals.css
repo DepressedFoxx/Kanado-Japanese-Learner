@@ -299,3 +299,27 @@ nav a:hover { text-decoration: none; }
 .kc .yomi { line-height: 1.5; }
 .kc .ex { line-height: 1.55; }
 .face .romaji .rj { color: var(--accent); }
+
+/* nhãn cho mục lấy từ từ điển mở — nghĩa tiếng Anh, không phải tiếng Việt */
+.entag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  line-height: 1.5;
+  color: var(--ink-3);
+  vertical-align: middle;
+}
+.kc .hanviet {
+  font-size: 11.5px;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border-radius: 4px;
+  padding: 2px 6px;
+  align-self: flex-start;
+}
+.kc .hanviet b { color: var(--accent); }
+.kc .strokes { color: var(--ink-3); }

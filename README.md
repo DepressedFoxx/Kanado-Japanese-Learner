@@ -1,7 +1,7 @@
-# Kanadō — học tiếng Nhật từ bảng chữ tới JLPT N4
+# Kanadō — học tiếng Nhật từ bảng chữ tới JLPT N3
 
-Ứng dụng học tiếng Nhật cá nhân: bảng chữ, kanji, từ vựng, ngữ pháp N5–N4, flashcard lặp lại
-ngắt quãng và đề kiểm tra chấm điểm. Tiến độ đồng bộ giữa các thiết bị qua tài khoản.
+Ứng dụng học tiếng Nhật cá nhân: bảng chữ, 721 kanji, 3.644 từ vựng, ngữ pháp N5–N3,
+flashcard lặp lại ngắt quãng và đề kiểm tra chấm điểm. Tiến độ đồng bộ giữa các thiết bị qua tài khoản.
 
 | Mảng | Công nghệ |
 |---|---|
@@ -20,13 +20,14 @@ Kanado-Japanese-Learner/
 ├─ packages/
 │  └─ content/           Toàn bộ dữ liệu học, dùng chung cho web và api
 ├─ prototype/kana-do.html  Bản HTML một trang ban đầu (nguồn của dữ liệu)
-├─ tools/extract-content.js  Sinh lại packages/content/src/raw.ts từ prototype
+├─ tools/extract-content.js    Sinh lại raw.ts từ prototype
+├─ tools/import-dictionary.js  Nhập kanji và từ vựng từ từ điển mở
 └─ docker-compose.yml    Postgres cho môi trường phát triển
 ```
 
 ### Vì sao nội dung nằm ở package chứ không gọi API
 
-Dữ liệu học là tĩnh và không lớn (249 kanji, 241 từ, 68 mẫu ngữ pháp). Để trong package thì web
+Dữ liệu học là tĩnh (721 kanji, 3.644 từ, 134 mẫu ngữ pháp). Để trong package thì web
 render tức thì, không chờ mạng, và học được cả khi API chết. API vẫn có đầy đủ endpoint
 `/api/content/*` đọc từ cùng nguồn — dành cho client khác về sau (app điện thoại chẳng hạn) và
 để bạn tra cứu, thống kê, soạn thêm nội dung bằng DBeaver.
@@ -117,6 +118,7 @@ Muốn xem nhanh không cần DBeaver: `npm run db:studio` mở Prisma Studio.
 | `npm run db:seed` | Nạp lại nội dung học vào DB |
 | `npm run db:studio` | Mở Prisma Studio |
 | `npm run extract:content` | Sinh lại `raw.ts` từ `prototype/kana-do.html` |
+| `npm run import:dict` | Tải lại kanji và từ vựng từ từ điển mở |
 
 ## API
 
@@ -143,7 +145,7 @@ Tất cả nằm dưới tiền tố `/api`.
 
 ### Nội dung (không cần đăng nhập)
 
-`/content/kana`, `/content/kanji?level=N5|N4|both`, `/content/vocab`, `/content/grammar?level=…`,
+`/content/kana`, `/content/kanji?level=N5|N4|N3|both`, `/content/vocab`, `/content/grammar?level=…`,
 `/content/cloze?level=…`, `/content/decks`, `/content/decks/:deckId`, `/content/plan`.
 
 ## Cách đồng bộ hoạt động
@@ -251,13 +253,36 @@ Chấm tròn cạnh tên tài khoản trên header chuyển xanh là đã đồn
 
 ## Nội dung học hiện có
 
-| Mảng | Có sẵn | N4 cần |
+| Mảng | Có sẵn | N3 cần |
 |---|---|---|
 | Bảng chữ | đủ (hiragana + katakana + mở rộng) | đủ |
-| Kanji | 249 | ~300 |
-| Từ vựng | 241 | ~1.500 |
-| Mẫu ngữ pháp | 68 (20 N5 + 48 N4) | ~150 |
-| Luyện nghe | 0 | 60/180 điểm thi |
+| Kanji | 721 | ~650 |
+| Từ vựng | 3.644 | ~3.750 |
+| Mẫu ngữ pháp | 134 (20 N5 + 48 N4 + 66 N3) | ~300 cộng dồn |
+| Luyện đọc, luyện nghe | 0 | 120/180 điểm đề N3 |
 
-App không dạy nghe được, và phần nghe chiếm 60/180 điểm N4 với mức điểm sàn riêng. Xem tab
-**Lộ trình** trong app để biết cần thêm giáo trình và tài liệu nghe nào.
+Nội dung đến từ hai nguồn. Phần **soạn tay** (461 kanji, 423 từ, toàn bộ ngữ pháp) có nghĩa tiếng
+Việt và từ ví dụ chọn lọc. Phần **nhập từ từ điển mở** lấp chỗ còn lại, nghĩa là tiếng Anh và được
+đánh dấu `EN` trong giao diện. Mọi kanji đều có **âm Hán Việt** lấy từ KANJIDIC2 — rất hữu ích để
+đoán nghĩa chữ chưa gặp.
+
+Nhập lại dữ liệu từ điển:
+
+```bash
+npm run import:dict && npm run build:content && npm run db:seed
+```
+
+App không dạy đọc hiểu và nghe được — hai mảng đó chiếm 120/180 điểm đề N3. Xem tab **Lộ trình**
+trong app để biết cần thêm giáo trình và tài liệu nào.
+
+## Nguồn dữ liệu và ghi công
+
+- **KANJIDIC2** — Electronic Dictionary Research and Development Group (EDRDG), dùng theo giấy
+  phép [Creative Commons BY-SA 4.0](https://www.edrdg.org/edrdg/licence.html). Cung cấp âm On,
+  âm Kun, âm Hán Việt, nghĩa tiếng Anh, số nét và độ thường gặp.
+- **open-anki-jlpt-decks** — Jamie Sinclair, giấy phép MIT.
+  Cung cấp danh sách từ vựng đã gắn cấp JLPT.
+
+KANJIDIC2 dùng thang JLPT cũ (1–4) chứ không phải thang mới, và kỳ thi hiện nay không công bố danh
+sách kanji chính thức. Script nhập quy đổi xấp xỉ: cũ 4 → N5, cũ 3 → N4, cũ 2 → N3 lấy theo độ
+thường gặp cho tới khoảng 650 chữ. Đây là phép xấp xỉ, không phải danh sách chính thức.

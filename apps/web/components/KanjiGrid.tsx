@@ -20,6 +20,7 @@ export function KanjiGrid() {
       return (
         item.char.includes(query.trim()) ||
         item.meaning.toLowerCase().includes(needle) ||
+        (item.hanViet ?? "").toLowerCase().includes(needle) ||
         item.on.includes(query.trim()) ||
         item.kun.includes(query.trim()) ||
         item.example.word.includes(query.trim()) ||
@@ -28,6 +29,8 @@ export function KanjiGrid() {
       );
     });
   }, [filter, query]);
+
+  const importedCount = list.filter((k) => k.source === "imported").length;
 
   return (
     <>
@@ -46,16 +49,20 @@ export function KanjiGrid() {
           id="k-search"
           type="text"
           value={query}
-          placeholder="tìm chữ hoặc nghĩa…"
+          placeholder="tìm chữ, nghĩa, hoặc âm Hán Việt…"
           onChange={(event) => setQuery(event.target.value)}
-          style={{ maxWidth: 220, fontFamily: "inherit", fontSize: 14 }}
+          style={{ maxWidth: 260, fontFamily: "inherit", fontSize: 14 }}
         />
-        <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{list.length} chữ</span>
+        <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
+          {list.length} chữ
+          {importedCount > 0 && ` · ${importedCount} chữ nghĩa tiếng Anh`}
+        </span>
       </div>
 
       <div className="kgrid">
         {list.map((item) => {
-          const deckId = item.level === "N5" ? "k5" : "k4";
+          const deckId =
+            item.level === "N5" ? "k5" : item.level === "N4" ? "k4" : "k3";
           const state = srs[`${deckId}|${item.char}`];
           return (
             <button
@@ -65,9 +72,20 @@ export function KanjiGrid() {
             >
               <div className="top">
                 <span className="ch jp">{item.char}</span>
-                <span className="mean">{item.meaning}</span>
+                <span className="mean">
+                  {item.meaning}
+                  {item.source === "imported" && <span className="entag">EN</span>}
+                </span>
                 <span className="lv">{item.level}</span>
               </div>
+
+              {item.hanViet && (
+                <div className="hanviet">
+                  Hán Việt: <b>{item.hanViet}</b>
+                  {item.strokes ? <span className="strokes"> · {item.strokes} nét</span> : null}
+                </div>
+              )}
+
               <div className="yomi">
                 <b>ON</b> {item.on || "—"}
                 {item.onRomaji && <span className="rj"> {item.onRomaji}</span>}
@@ -76,12 +94,15 @@ export function KanjiGrid() {
                 <b>KUN</b> {item.kun || "—"}
                 {item.kunRomaji && <span className="rj"> {item.kunRomaji}</span>}
               </div>
-              <div className="ex">
-                <span className="exw jp">{item.example.word}</span> {item.example.reading}
-                <span className="rj"> {item.example.readingRomaji}</span>
-                <br />
-                {item.example.meaning}
-              </div>
+
+              {item.source === "vi" && (
+                <div className="ex">
+                  <span className="exw jp">{item.example.word}</span> {item.example.reading}
+                  <span className="rj"> {item.example.readingRomaji}</span>
+                  <br />
+                  {item.example.meaning}
+                </div>
+              )}
             </button>
           );
         })}

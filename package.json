@@ -18,7 +18,8 @@
     "db:seed": "npm run seed -w @kanado/api",
     "db:studio": "npm run prisma:studio -w @kanado/api",
     "setup": "npm install && npm run build:content && npm run prisma:generate -w @kanado/api",
-    "extract:content": "node tools/extract-content.js"
+    "extract:content": "node tools/extract-content.js",
+    "import:dict": "node tools/import-dictionary.js"
   },
   "devDependencies": {
     "rimraf": "^6.0.1",

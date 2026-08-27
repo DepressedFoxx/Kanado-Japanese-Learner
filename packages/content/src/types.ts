@@ -29,6 +29,8 @@ export interface ConfusablePair {
 }
 
 export interface VocabEntry {
+  /** nguồn của nghĩa */
+  source: ContentSource;
   /** dạng viết (kanji hoặc katakana) */
   word: string;
   /** cách đọc kana */
@@ -54,9 +56,20 @@ export interface KanjiExample {
   meaning: string;
 }
 
+export type ContentSource = "vi" | "imported";
+
 export interface KanjiEntry {
   char: string;
+  /** nghĩa — tiếng Việt nếu soạn tay, tiếng Anh nếu nhập từ từ điển */
   meaning: string;
+  /** nguồn của nghĩa, để giao diện báo cho người học biết */
+  source: ContentSource;
+  /** âm Hán Việt, lấy từ KANJIDIC2 — rất hữu ích để đoán nghĩa chữ mới */
+  hanViet?: string;
+  /** số nét */
+  strokes?: number;
+  /** thứ hạng độ thường gặp, càng nhỏ càng hay gặp */
+  frequency?: number;
   /** âm On, viết bằng katakana theo quy ước từ điển */
   on: string;
   /** âm On dạng romaji, để đọc và để gõ */
