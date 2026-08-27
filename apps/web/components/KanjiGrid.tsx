@@ -32,7 +32,7 @@ export function KanjiGrid() {
   return (
     <>
       <div className="toolbar">
-        {(["N5", "N4", "all"] as Filter[]).map((item) => (
+        {(["N5", "N4", "N3", "all"] as Filter[]).map((item) => (
           <button
             key={item}
             className="chip"

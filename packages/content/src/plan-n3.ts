@@ -3,8 +3,8 @@ import type { CoverageRow, PlanStep, Resource } from "./types";
 /**
  * Lộ trình chặng hai: từ N4 lên N3.
  *
- * Khác với chặng N5-N4, ứng dụng này gần như không có nội dung N3 — đây thuần
- * là bản đồ đường đi, còn nguyên liệu phải lấy từ giáo trình và tài liệu thật.
+ * App có bộ N3 nhập môn (kanji, từ vựng, ngữ pháp, đề luyện) đủ để bắt đầu,
+ * nhưng không đủ cho toàn bộ N3 — nhất là đọc hiểu và nghe thì không dạy được.
  * Coverage bên dưới nói rõ chỗ nào app phủ được, chỗ nào không.
  */
 
@@ -123,7 +123,7 @@ export function buildCoverageN3(
       label: "Mẫu ngữ pháp N3",
       have: grammarN3Count,
       need: N3_TARGET.grammar,
-      note: "app chưa có nội dung N3 — dùng giáo trình",
+      note: "phần còn lại lấy từ giáo trình",
     },
     {
       label: "Đọc hiểu",

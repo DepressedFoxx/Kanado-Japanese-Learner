@@ -11,6 +11,7 @@ export function GrammarList() {
   const counts = {
     N5: grammar.filter((g) => g.level === "N5").length,
     N4: grammar.filter((g) => g.level === "N4").length,
+    N3: grammar.filter((g) => g.level === "N3").length,
   };
 
   return (
@@ -19,7 +20,7 @@ export function GrammarList() {
         <button className="chip" aria-pressed={tab === "base"} onClick={() => setTab("base")}>
           Nền tảng · {foundations.length} mục
         </button>
-        {(["N5", "N4"] as Level[]).map((level) => (
+        {(["N5", "N4", "N3"] as Level[]).map((level) => (
           <button
             key={level}
             className="chip"
@@ -35,7 +36,7 @@ export function GrammarList() {
         <>
           <p className="lede" style={{ fontSize: 13.5 }}>
             Trật tự từ và hệ thống thì — phần lẽ ra phải học trước mọi mẫu câu, nhưng giáo trình
-            thường dạy thẳng vào mẫu nên hay bị bỏ qua. Nắm tám mục này rồi thì các mẫu N5–N4 bên
+            thường dạy thẳng vào mẫu nên hay bị bỏ qua. Nắm tám mục này rồi thì các mẫu N5, N4, N3 bên
             cạnh không còn là học thuộc lòng.
           </p>
           <div className="glist">

@@ -333,14 +333,14 @@ export function TestRunner() {
 
           <h3>Cấp độ</h3>
           <div className="toolbar">
-            {(["N5", "N4", "both"] as LevelFilter[]).map((item) => (
+            {(["N5", "N4", "N3", "both"] as LevelFilter[]).map((item) => (
               <button
                 key={item}
                 className="chip"
                 aria-pressed={level === item}
                 onClick={() => setLevel(item)}
               >
-                {item === "both" ? "N5 + N4" : item}
+                {item === "both" ? "Tất cả" : item}
               </button>
             ))}
           </div>
@@ -506,7 +506,7 @@ export function TestRunner() {
                         <tr key={i}>
                           <td>{formatDateTime(attempt.createdAt)}</td>
                           <td>{TYPE_NAME[attempt.type as TestType] ?? attempt.type}</td>
-                          <td>{attempt.level === "both" ? "N5+N4" : attempt.level}</td>
+                          <td>{attempt.level === "both" ? "Tất cả" : attempt.level}</td>
                           <td className="n">
                             {attempt.correct}/{attempt.total}
                           </td>

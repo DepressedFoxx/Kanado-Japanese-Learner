@@ -62,7 +62,7 @@ export function AccountView() {
   const dueToday = srsValues.filter(([, s]) => s.dueDay <= day).length;
   const totalCards = decks.reduce((sum, deck) => sum + deck.size, 0);
   const masteredKanji = srsValues.filter(
-    ([id, s]) => (id.startsWith("k5|") || id.startsWith("k4|")) && s.box >= 4,
+    ([id, s]) => (id.startsWith("k5|") || id.startsWith("k4|") || id.startsWith("k3|")) && s.box >= 4,
   ).length;
 
   return (
@@ -146,7 +146,7 @@ export function AccountView() {
                     <tr key={index}>
                       <td>{formatDateTime(attempt.createdAt)}</td>
                       <td>{TEST_NAME[attempt.type] ?? attempt.type}</td>
-                      <td>{attempt.level === "both" ? "N5+N4" : attempt.level}</td>
+                      <td>{attempt.level === "both" ? "Tất cả" : attempt.level}</td>
                       <td className="n">
                         {Math.round((attempt.correct / attempt.total) * 100)}%
                       </td>

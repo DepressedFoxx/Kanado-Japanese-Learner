@@ -1,4 +1,8 @@
 import { buildCoverageN3 } from "./plan-n3";
+import { GBANK_N3 } from "./n3-cloze";
+import { GRAMMAR_N3 } from "./n3-grammar";
+import { KANJI_N3 } from "./n3-kanji";
+import { VOCAB_N3 } from "./n3-vocab";
 import { createRomajiConverter } from "./romaji";
 import * as raw from "./raw";
 import type {
@@ -128,6 +132,7 @@ export const vocabGroups: VocabGroup[] = [
   { id: "kata", label: "Katakana thường gặp", level: "kana", items: katakanaVocab },
   ...toVocabGroups(raw.N5, "N5", "n5"),
   ...toVocabGroups(raw.N4V, "N4", "n4"),
+  ...toVocabGroups(VOCAB_N3, "N3", "n3v"),
 ];
 
 export const vocab: VocabEntry[] = vocabGroups.flatMap((g) => g.items);
@@ -148,7 +153,7 @@ export const toRomaji = createRomajiConverter(kana);
 export const kanji: KanjiEntry[] = (() => {
   const seen = new Set<string>();
   const list: KanjiEntry[] = [];
-  for (const [char, meaning, on, kun, example, level] of raw.KANJI) {
+  for (const [char, meaning, on, kun, example, level] of [...raw.KANJI, ...KANJI_N3]) {
     if (seen.has(char)) continue;
     seen.add(char);
     const [word, reading, exMeaning] = example.split("|");
@@ -192,6 +197,7 @@ function toGrammar(source: (string | string[][])[][], level: Level): GrammarPoin
 export const grammar: GrammarPoint[] = [
   ...toGrammar(raw.GRAMMAR, "N5"),
   ...toGrammar(raw.GRAMMAR4, "N4"),
+  ...toGrammar(GRAMMAR_N3, "N3"),
 ];
 
 export function grammarByLevel(level: Level | "both"): GrammarPoint[] {
@@ -221,6 +227,7 @@ function toCloze(source: (string | string[])[][], level: Level): ClozeQuestion[]
 export const clozeQuestions: ClozeQuestion[] = [
   ...toCloze(raw.GBANK, "N5"),
   ...toCloze(raw.GBANK4, "N4"),
+  ...toCloze(GBANK_N3, "N3"),
 ];
 
 export function clozeByLevel(level: Level | "both"): ClozeQuestion[] {
@@ -305,6 +312,13 @@ export const decks: DeckMeta[] = [
     level: "N4",
     size: kanji.filter((k) => k.level === "N4").length,
   },
+  {
+    id: "k3",
+    label: "Kanji N3",
+    kind: "kanji",
+    level: "N3",
+    size: kanji.filter((k) => k.level === "N3").length,
+  },
   ...vocabGroups
     .filter((g) => g.id !== "kata")
     .map<DeckMeta>((g) => ({
@@ -328,6 +342,13 @@ export const decks: DeckMeta[] = [
     level: "N4",
     size: grammar.filter((g) => g.level === "N4").length,
   },
+  {
+    id: "gr3",
+    label: "Ngữ pháp N3",
+    kind: "grammar",
+    level: "N3",
+    size: grammar.filter((g) => g.level === "N3").length,
+  },
 ];
 
 export interface DeckCard {
@@ -349,8 +370,8 @@ export interface DeckCard {
 }
 
 export function deckCards(deckId: string): DeckCard[] {
-  if (deckId === "gr" || deckId === "gr4") {
-    const level: Level = deckId === "gr4" ? "N4" : "N5";
+  if (deckId === "gr" || deckId === "gr4" || deckId === "gr3") {
+    const level: Level = deckId === "gr4" ? "N4" : deckId === "gr3" ? "N3" : "N5";
     return grammar
       .filter((g) => g.level === level)
       .map((g) => ({
@@ -365,8 +386,8 @@ export function deckCards(deckId: string): DeckCard[] {
       }));
   }
 
-  if (deckId === "k5" || deckId === "k4") {
-    const level: Level = deckId === "k5" ? "N5" : "N4";
+  if (deckId === "k5" || deckId === "k4" || deckId === "k3") {
+    const level: Level = deckId === "k5" ? "N5" : deckId === "k4" ? "N4" : "N3";
     return kanji
       .filter((k) => k.level === level)
       .map((k) => ({

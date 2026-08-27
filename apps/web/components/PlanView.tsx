@@ -85,8 +85,9 @@ export function PlanView() {
             </>
           ) : (
             <>
-              Ở chặng N3, app gần như chỉ còn là chỗ ôn lại nền N5–N4. Nội dung N3 phải lấy hoàn
-              toàn từ giáo trình và tài liệu thật. Thanh đỏ là mảng app không dạy được.
+              App có bộ N3 nhập môn để bắt đầu ngay, nhưng còn xa mới đủ cho cả kỳ thi — phần
+              thiếu phải lấy từ giáo trình. Thanh đỏ là hai mảng app không dạy được: đọc hiểu và
+              nghe, cộng lại chiếm 120/180 điểm của đề N3.
             </>
           )}
         </p>
@@ -199,7 +200,7 @@ export function PlanView() {
               script, rồi shadowing chính đoạn đó.
             </div>
             <div>
-              App này ở chặng N3 chỉ dùng để giữ nền N5–N4 khỏi rơi rụng: chạy flashcard đến hạn mỗi
+              App ở chặng này: chạy bộ thẻ Kanji N3 và Ngữ pháp N3 mỗi ngày, đồng thời giữ nền N5–N4 khỏi rơi rụng bằng flashcard đến hạn mỗi
               ngày, mỗi tuần một đề Tổng hợp.
             </div>
           </div>

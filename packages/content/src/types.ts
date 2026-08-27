@@ -1,4 +1,4 @@
-export type Level = "N5" | "N4";
+export type Level = "N5" | "N4" | "N3";
 export type Script = "hiragana" | "katakana";
 export type KanaGroup = "gojuon" | "dakuten" | "yoon" | "extended";
 

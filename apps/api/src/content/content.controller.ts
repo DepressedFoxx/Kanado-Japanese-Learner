@@ -3,8 +3,8 @@ import { ContentService, LevelFilter } from "./content.service";
 
 function parseLevel(value?: string): LevelFilter {
   if (!value || value === "both") return "both";
-  if (value === "N5" || value === "N4") return value;
-  throw new BadRequestException("level chỉ nhận N5, N4 hoặc both");
+  if (value === "N5" || value === "N4" || value === "N3") return value;
+  throw new BadRequestException("level chỉ nhận N5, N4, N3 hoặc both");
 }
 
 @Controller("content")
