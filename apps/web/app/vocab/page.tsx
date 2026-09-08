@@ -11,9 +11,9 @@ export default function VocabPage() {
       <div>
         <h2>Từ vựng</h2>
         <p className="lede">
-          <b>{vocab.length}</b> từ. Các nhóm theo chủ đề (<b>{vi}</b> từ) có nghĩa tiếng Việt; các
-          nhóm “Kho từ” lấy từ từ điển mở nên nghĩa là tiếng Anh. Tra ở đây, học thuộc ở tab
-          Flashcard. Bấm vào từ để nghe.
+          <b>{vocab.length}</b> từ, có thể lọc theo cấp độ, loại từ và chủ đề. Nội dung biên soạn
+          theo chủ đề (<b>{vi}</b> từ) có nghĩa tiếng Việt; kho mở rộng dùng nghĩa tiếng Anh. Tra ở
+          đây, học thuộc ở tab Flashcard. Bấm vào từ để nghe.
         </p>
       </div>
       <VocabList />
