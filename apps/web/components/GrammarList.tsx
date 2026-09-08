@@ -77,8 +77,26 @@ function inferGrammarRoles(pattern: string, note: string): GrammarRoleId[] {
   return [...new Set(roles)];
 }
 
-function GrammarRoleBadges({ pattern, note }: { pattern: string; note: string }) {
+function GrammarRoleBadges({
+  pattern,
+  note,
+  examples = [],
+}: {
+  pattern: string;
+  note: string;
+  examples?: string[];
+}) {
   const roles = inferGrammarRoles(pattern, note);
+
+  for (const sentence of examples) {
+    const parts = splitExampleParts(sentence.replace(JAPANESE_PUNCTUATION_PATTERN, ""));
+
+    parts.forEach((part, index) => {
+      const role = classifyExamplePart(part, index, parts, roles);
+      if (role && !roles.includes(role)) roles.push(role);
+    });
+  }
+
   if (roles.length === 0) return null;
 
   return (
@@ -112,17 +130,17 @@ function classifyExamplePart(
     return "particle";
   }
 
-  const meaningfulParts = parts.filter((value) => value.trim());
-  const isLastPart = part === meaningfulParts.at(-1);
+  const lastMeaningfulIndex = parts.findLastIndex((value) => value.trim());
+  const isLastPart = index === lastMeaningfulIndex;
 
   if (isLastPart && roles.includes("i-adjective")) return "i-adjective";
   if (isLastPart && roles.includes("na-adjective")) return "na-adjective";
-  if (isLastPart && (roles.includes("verb") || looksLikeJapaneseVerb(part))) {
+  if (looksLikeJapaneseVerb(part) || (isLastPart && roles.includes("verb"))) {
     return "verb";
   }
 
-  const nextPart = parts[index + 1];
-  if (roles.includes("noun") && EXAMPLE_PARTICLES.has(nextPart ?? "")) {
+  const nextPart = parts.slice(index + 1).find((value) => value.trim());
+  if (EXAMPLE_PARTICLES.has(nextPart ?? "")) {
     return "noun";
   }
 
@@ -141,7 +159,18 @@ function splitExampleParts(sentence: string) {
   for (const item of JAPANESE_WORD_SEGMENTER.segment(sentence)) {
     let segment = item.segment;
 
+    if (/^\s+$/.test(segment)) {
+      pushPhrase();
+      parts.push(segment);
+      continue;
+    }
+
     if (EXAMPLE_PARTICLES.has(segment)) {
+      if (segment === "で" && phrase.endsWith("ん")) {
+        phrase += segment;
+        continue;
+      }
+
       pushPhrase();
       parts.push(segment);
       continue;
@@ -277,9 +306,18 @@ export function GrammarList() {
                 </summary>
                 <div className="gbody">
                   <p style={{ fontSize: "13.5px" }}>{topic.body}</p>
+                  <GrammarRoleBadges
+                    pattern={`${topic.title} ${topic.gloss}`}
+                    note={topic.body}
+                    examples={topic.examples.map((example) => example.jp)}
+                  />
                   {topic.examples.map((example, index) => (
                     <div className="ex" key={index}>
-                      <span className="j jp">{example.jp}</span>
+                      <AnnotatedExample
+                        sentence={example.jp}
+                        pattern={`${topic.title} ${topic.gloss}`}
+                        note={topic.body}
+                      />
                       <span className="vn">{example.vn}</span>
                     </div>
                   ))}
