@@ -1,3 +1,5 @@
+export { cn } from "cn";
+
 export function shuffle<T>(items: T[]): T[] {
   const copy = [...items];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -24,10 +26,28 @@ export function formatDateTime(iso: string): string {
 
 /** Chuẩn hóa romaji người dùng gõ: chấp nhận si/shi, tu/tsu, hu/fu… */
 const ROMAJI_ALIASES: Record<string, string> = {
-  si: "shi", ti: "chi", tu: "tsu", hu: "fu", zi: "ji", di: "ji", du: "zu",
-  sya: "sha", syu: "shu", syo: "sho", tya: "cha", tyu: "chu", tyo: "cho",
-  jya: "ja", jyu: "ju", jyo: "jo", zya: "ja", zyu: "ju", zyo: "jo",
-  o: "wo", nn: "n", vi: "vu",
+  si: "shi",
+  ti: "chi",
+  tu: "tsu",
+  hu: "fu",
+  zi: "ji",
+  di: "ji",
+  du: "zu",
+  sya: "sha",
+  syu: "shu",
+  syo: "sho",
+  tya: "cha",
+  tyu: "chu",
+  tyo: "cho",
+  jya: "ja",
+  jyu: "ju",
+  jyo: "jo",
+  zya: "ja",
+  zyu: "ju",
+  zyo: "jo",
+  o: "wo",
+  nn: "n",
+  vi: "vu",
 };
 
 export function normalizeRomaji(input: string): string {
