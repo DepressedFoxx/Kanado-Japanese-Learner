@@ -9,7 +9,8 @@ export default function FlashcardPage() {
         <h2>Flashcard</h2>
         <p className="lede">
           Lặp lại ngắt quãng: thẻ bạn nhớ sẽ giãn dần ra (1 → 2 → 4 → 8 → 16 → 30 ngày), thẻ quên
-          quay lại ngay trong phiên. Bấm vào thẻ hoặc phím <b>Space</b> để lật, rồi chấm 1 / 2 / 3.
+          quay lại ngay trong phiên. Bấm vào thẻ hoặc phím <b>Space</b> để lật qua lại; dùng phím
+          mũi tên để chuyển thẻ, rồi chấm 1 / 2 / 3.
         </p>
       </div>
       <Flashcard />

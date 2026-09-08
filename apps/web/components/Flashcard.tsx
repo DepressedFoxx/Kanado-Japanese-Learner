@@ -1,15 +1,43 @@
 "use client";
 
-import { type DeckCard } from "@kanado/content";
+import { type DeckCard, type DeckKind, type Level } from "@kanado/content";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ContentStatusNote, useDeckCards, useDecks } from "@/lib/content";
 import { speak } from "@/lib/speech";
 import { today, useProgress } from "@/lib/store";
 import { shuffle } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const NEW_PER_SESSION = 12;
 
 type Direction = "jp" | "vn";
+type DeckLevel = Level | "kana";
+
+const DECK_KIND_LABELS: Record<DeckKind, string> = {
+  vocab: "Từ vựng",
+  kanji: "Kanji",
+  grammar: "Ngữ pháp",
+};
+
+const DECK_LEVEL_LABELS: Record<DeckLevel, string> = {
+  kana: "Katakana",
+  N5: "N5",
+  N4: "N4",
+  N3: "N3",
+};
+
+const DECK_LEVEL_ORDER: DeckLevel[] = ["kana", "N5", "N4", "N3"];
 
 export function Flashcard() {
   const { srs, gradeCard } = useProgress();
@@ -20,6 +48,18 @@ export function Flashcard() {
   const [direction, setDirection] = useState<Direction>("jp");
   const [queue, setQueue] = useState<DeckCard[]>([]);
   const [flipped, setFlipped] = useState(false);
+
+  const selectedDeck = decks.find((deck) => deck.id === deckId) ?? decks[0];
+  const selectedKind = selectedDeck?.kind ?? "vocab";
+  const selectedLevel = selectedDeck?.level ?? "kana";
+  const availableLevels = DECK_LEVEL_ORDER.filter((level) =>
+    decks.some((deck) => deck.kind === selectedKind && deck.level === level),
+  );
+  const availableDecks = decks.filter(
+    (deck) => deck.kind === selectedKind && deck.level === selectedLevel,
+  );
+  const topicDecks = availableDecks.filter((deck) => !deck.id.startsWith("imp-"));
+  const importedDecks = availableDecks.filter((deck) => deck.id.startsWith("imp-"));
 
   const srsRef = useRef(srs);
   srsRef.current = srs;
@@ -45,11 +85,31 @@ export function Flashcard() {
 
   const current = queue[0] ?? null;
 
-  const reveal = useCallback(() => {
-    if (!current || flipped) return;
-    setFlipped(true);
-    speak(current.reading);
+  const flipCard = useCallback(() => {
+    if (!current) return;
+    if (!flipped) speak(current.reading);
+    setFlipped((value) => !value);
   }, [current, flipped]);
+
+  const showPrevious = useCallback(() => {
+    setQueue((previousQueue) => {
+      if (previousQueue.length <= 1) return previousQueue;
+
+      const last = previousQueue[previousQueue.length - 1];
+      return [last, ...previousQueue.slice(0, -1)];
+    });
+    setFlipped(false);
+  }, []);
+
+  const showNext = useCallback(() => {
+    setQueue((previousQueue) => {
+      if (previousQueue.length <= 1) return previousQueue;
+
+      const [first, ...rest] = previousQueue;
+      return [...rest, first];
+    });
+    setFlipped(false);
+  }, []);
 
   const grade = useCallback(
     (value: 0 | 1 | 2) => {
@@ -67,19 +127,28 @@ export function Flashcard() {
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
-      if (event.code === "Space") {
-        event.preventDefault();
-        if (!flipped) reveal();
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT")
+      ) {
         return;
       }
+      if (event.code === "Space") {
+        event.preventDefault();
+        flipCard();
+        return;
+      }
+      if (event.key === "ArrowLeft") showPrevious();
+      if (event.key === "ArrowRight") showNext();
       if (event.key === "1") grade(0);
       if (event.key === "2") grade(1);
       if (event.key === "3") grade(2);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [flipped, reveal, grade]);
+  }, [flipCard, grade, showNext, showPrevious]);
 
   const day = today();
   const dueCount = cards.filter((c) => {
@@ -98,41 +167,132 @@ export function Flashcard() {
     setFlipped(false);
   }
 
+  function selectFirstDeck(kind: DeckKind, level?: DeckLevel) {
+    const nextDeck = decks.find(
+      (deck) => deck.kind === kind && (level === undefined || deck.level === level),
+    );
+
+    if (nextDeck) setDeckId(nextDeck.id);
+  }
+
   return (
     <>
-      <div className="card">
-        <h3>Bộ thẻ</h3>
-        <div className="toolbar">
-          {decks.map((deck) => (
-            <button
-              key={deck.id}
-              className="chip"
-              aria-pressed={deckId === deck.id}
-              onClick={() => setDeckId(deck.id)}
-            >
-              {deck.label}
-            </button>
-          ))}
-        </div>
-        <ContentStatusNote status={status} />
-        <h3>Chiều hỏi</h3>
-        <div className="toolbar">
-          <button
-            className="chip"
-            aria-pressed={direction === "jp"}
-            onClick={() => setDirection("jp")}
-          >
-            Nhật → Việt
-          </button>
-          <button
-            className="chip"
-            aria-pressed={direction === "vn"}
-            onClick={() => setDirection("vn")}
-          >
-            Việt → Nhật
-          </button>
-        </div>
-      </div>
+      <Card className="flashcard-settings">
+        <CardHeader>
+          <CardTitle>Bộ thẻ</CardTitle>
+        </CardHeader>
+        <CardContent className="flashcard-settings-content">
+          <div className="deck-picker">
+            <div className="deck-picker-field">
+              <label htmlFor="deck-kind">Loại nội dung</label>
+              <Select
+                value={selectedKind}
+                onValueChange={(value) => selectFirstDeck(value as DeckKind)}
+              >
+                <SelectTrigger id="deck-kind" className="w-full">
+                  <SelectValue>{DECK_KIND_LABELS[selectedKind]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.entries(DECK_KIND_LABELS) as [DeckKind, string][]).map(
+                    ([kind, label]) => (
+                      <SelectItem key={kind} value={kind}>
+                        {label}
+                      </SelectItem>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="deck-picker-field">
+              <label htmlFor="deck-level">Cấp độ</label>
+              <Select
+                value={selectedLevel}
+                onValueChange={(value) =>
+                  selectFirstDeck(selectedKind, value as DeckLevel)
+                }
+              >
+                <SelectTrigger id="deck-level" className="w-full">
+                  <SelectValue>{DECK_LEVEL_LABELS[selectedLevel]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {availableLevels.map((level) => (
+                    <SelectItem key={level} value={level}>
+                      {DECK_LEVEL_LABELS[level]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="deck-picker-field deck-picker-field-wide">
+              <label htmlFor="deck-specific">Bộ cụ thể</label>
+              <Select
+                value={deckId}
+                onValueChange={(value) => setDeckId(value as string)}
+              >
+                <SelectTrigger id="deck-specific" className="w-full">
+                  <SelectValue>
+                    {selectedDeck?.label.replace(/^N[345] · /, "")}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {topicDecks.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Theo chủ đề</SelectLabel>
+                      {topicDecks.map((deck) => (
+                        <SelectItem key={deck.id} value={deck.id}>
+                          {deck.label.replace(/^N[345] · /, "")} ({deck.size} thẻ)
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
+                  {importedDecks.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Kho mở rộng</SelectLabel>
+                      {importedDecks.map((deck) => (
+                        <SelectItem key={deck.id} value={deck.id}>
+                          {deck.label.replace(/^N[345] · Kho từ /, "Phần ")} (
+                          {deck.size} thẻ)
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {selectedDeck && (
+            <div className="selected-deck-note">
+              <span>Đang học</span>
+              <b>{selectedDeck.label}</b>
+              <Badge variant="secondary">{selectedDeck.size} thẻ</Badge>
+            </div>
+          )}
+          <ContentStatusNote status={status} />
+
+          <div className="direction-picker">
+            <span>Chiều hỏi</span>
+            <div className="toolbar">
+              <Button
+                variant={direction === "jp" ? "default" : "outline"}
+                aria-pressed={direction === "jp"}
+                onClick={() => setDirection("jp")}
+              >
+                Nhật → Việt
+              </Button>
+              <Button
+                variant={direction === "vn" ? "default" : "outline"}
+                aria-pressed={direction === "vn"}
+                onClick={() => setDirection("vn")}
+              >
+                Việt → Nhật
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="deckstat">
         <div className="due">
@@ -158,11 +318,11 @@ export function Flashcard() {
       <div className="flipwrap">
         <div
           className={`flip${flipped ? " on" : ""}`}
-          onClick={reveal}
+          onClick={flipCard}
           role="button"
           tabIndex={0}
           onKeyDown={(event) => {
-            if (event.key === "Enter") reveal();
+            if (event.key === "Enter") flipCard();
           }}
         >
           <div className="face front">
@@ -175,15 +335,15 @@ export function Flashcard() {
                   Quay lại vào ngày mai khi thẻ tới hạn, hoặc đổi sang bộ khác. Muốn học thêm ngay
                   thì nạp thêm thẻ.
                 </div>
-                <button
-                  className="chip"
+                <Button
+                  variant="outline"
                   onClick={(event) => {
                     event.stopPropagation();
                     loadMore();
                   }}
                 >
                   Nạp thêm thẻ
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -211,15 +371,15 @@ export function Flashcard() {
       )}
 
       <div className="toolbar" style={{ justifyContent: "center" }}>
-        <button className="chip" onClick={reveal}>
-          Lật thẻ (Space)
-        </button>
-        <button className="chip" onClick={() => current && speak(current.reading)}>
+        <Button variant="outline" disabled={queue.length <= 1} onClick={showPrevious}>
+          ← Trước
+        </Button>
+        <Button variant="outline" onClick={() => current && speak(current.reading)}>
           Nghe đọc
-        </button>
-        <button className="chip" onClick={buildQueue}>
-          Xếp lại phiên
-        </button>
+        </Button>
+        <Button variant="outline" disabled={queue.length <= 1} onClick={showNext}>
+          Tiếp →
+        </Button>
       </div>
     </>
   );
