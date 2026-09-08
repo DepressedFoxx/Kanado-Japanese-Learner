@@ -81,6 +81,63 @@ npm run dev:web
 
 Web ở http://localhost:3000, API ở http://localhost:4000/api.
 
+## Audio VOICEVOX tạo sẵn (mặc định)
+
+App phát MP3 từ `apps/web/public/audio`, không gọi dịch vụ trả phí khi bấm loa.
+Nếu thiếu audio (ví dụ từ mới trong database), app dùng giọng trình duyệt.
+Trang `/speech-review` có nút nghe VOICEVOX, Google và giọng cũ riêng biệt.
+
+Chạy VOICEVOX Engine trên máy cá nhân, chỉ mở cổng local:
+
+```bash
+docker run --rm -p 127.0.0.1:50021:50021 voicevox/voicevox_engine:cpu-latest
+```
+
+Cũng có thể chạy bản Windows chính thức của VOICEVOX Engine hoặc ứng dụng VOICEVOX.
+Cài FFmpeg rồi chạy `npm run audio:generate`. Nếu FFmpeg không nằm trong PATH,
+đặt `FFMPEG_PATH` bằng đường dẫn executable. `VOICEVOX_URL` mặc định là
+`http://127.0.0.1:50021`; `VOICEVOX_SPEAKER` mặc định là 13 (青山龍星).
+`AUDIO_LIMIT=10` tạo tối đa 10 file mới để nghe thử. Bỏ biến này để tạo cả bộ.
+Nếu chạy nhiều engine cùng phiên bản trên các cổng khác nhau, có thể đặt
+`VOICEVOX_URLS=http://127.0.0.1:50021,http://127.0.0.1:50022` để chia việc tạo audio.
+
+Script gom kana, cách đọc từ vựng, ví dụ kanji, câu đọc flashcard ngữ pháp và mẫu review, bỏ trùng và bỏ qua
+file đã có. Mỗi file được đánh tên theo hash của phiên bản engine, speaker và text.
+Manifest được cập nhật sau mỗi file nên có thể chạy lại sau khi gián đoạn.
+Nguồn dữ liệu là package nội dung; thay đổi chỉ trong DB cần cập nhật vào package
+trước khi tạo audio mới. Không tạo audio trong lệnh build Vercel.
+Chạy `npm run audio:check` để kiểm tra đầy đủ file trước khi deploy.
+
+Commit `apps/web/public/audio` cùng frontend để Vercel phục vụ file tĩnh.
+Không đưa engine trong `tools/.cache` lên Git. Không cần sửa Render hay database.
+Footer hiển thị credit lấy từ engine; điều kiện giọng đọc tại
+https://voicevox.hiroshiba.jp/product/aoyama_ryusei/ và https://voicevox.hiroshiba.jp/term/.
+
+## Nghe thử Google Text-to-Speech (tùy chọn)
+
+Google chỉ được gọi bằng nút Google trên trang review.
+Trang `/speech-review` so sánh hai nguồn và báo lỗi Google rõ ràng, không tự thay giọng.
+
+Trong `apps/web/.env.local` (hoặc biến môi trường của máy chủ **web**), đặt:
+
+```env
+GOOGLE_TTS_API_KEY=your-google-cloud-api-key
+GOOGLE_TTS_VOICE=ja-JP-Neural2-B
+```
+
+Bật Cloud Text-to-Speech API và billing trong Google Cloud project của khóa.
+Giới hạn khóa cho Cloud Text-to-Speech API; không đặt tiền tố `NEXT_PUBLIC_`.
+Khởi động lại web, mở `http://localhost:3000/speech-review`, bấm **Nghe Google**.
+Có thể đổi voice sang một giọng `ja-JP` khác trong danh sách Google hỗ trợ.
+Giọng Google phát ở tốc độ tự nhiên; giọng cũ giữ tốc độ 0,8×.
+
+Audio được cache trong RAM tối đa 100 mục mỗi server instance, mất khi restart;
+các request trùng đang chạy được gộp. Giới hạn tạo mới 30 request/phút/instance,
+300 ký tự/request. Đặt quota trên Google Cloud để giới hạn tổng chi phí khi chạy nhiều instance.
+Endpoint server: `POST /api/speech`, body `{ "text": "こんにちは" }`.
+
+Tài liệu: https://cloud.google.com/text-to-speech/docs/reference/rest/v1/text/synthesize
+
 ## Hai chuỗi kết nối: DATABASE_URL và DIRECT_URL
 
 Prisma cần hai biến vì Neon có hai loại endpoint:

@@ -8,6 +8,8 @@
     "apps/*"
   ],
   "scripts": {
+    "audio:generate": "npm run build:content && node tools/generate-audio.cjs",
+    "audio:check": "node tools/generate-audio.cjs --verify",
     "build:content": "npm run build -w @kanado/content",
     "dev:api": "npm run dev -w @kanado/api",
     "dev:web": "npm run dev -w @kanado/web",

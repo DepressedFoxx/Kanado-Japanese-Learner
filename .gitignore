@@ -21,3 +21,4 @@ Thumbs.db
 *.tsbuildinfo
 next-env.d.ts
 tools/.cache/
+apps/web/public/audio/*.tmp
