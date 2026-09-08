@@ -10,6 +10,7 @@ import {
   planStepsN3,
   resources,
   resourcesN3,
+  toRomaji,
   type Level,
 } from "@kanado/content";
 import { PrismaService } from "../prisma/prisma.service";
@@ -49,10 +50,13 @@ export class ContentService {
       strokes: row.strokes ?? undefined,
       frequency: row.frequency ?? undefined,
       on: row.onyomi,
+      onRomaji: toRomaji(row.onyomi),
       kun: row.kunyomi,
+      kunRomaji: toRomaji(row.kunyomi),
       example: {
         word: row.exampleWord,
         reading: row.exampleReading,
+        readingRomaji: toRomaji(row.exampleReading),
         meaning: row.exampleMeaning,
       },
       level: row.level,
@@ -193,24 +197,30 @@ export class ContentService {
         where: { level: kanjiLevel },
         orderBy: { id: "asc" },
       });
-      return rows.map((row) => ({
-        id: `${deckId}|${row.char}`,
-        deckId,
-        kind: "kanji",
-        front: row.char,
-        reading: row.exampleReading,
-        meaning: row.meaning,
-        romaji: "",
-        on: row.onyomi,
-        kun: row.kunyomi,
-        note: row.hanViet ? `Hán Việt: <b>${row.hanViet}</b>` : undefined,
-        examples: [
-          {
-            jp: `${row.exampleWord}（${row.exampleReading}）`,
-            vn: row.exampleMeaning,
-          },
-        ],
-      }));
+      return rows.map((row) => {
+        const onRomaji = toRomaji(row.onyomi);
+        const kunRomaji = toRomaji(row.kunyomi);
+        const readingRomaji = toRomaji(row.exampleReading);
+
+        return {
+          id: `${deckId}|${row.char}`,
+          deckId,
+          kind: "kanji",
+          front: row.char,
+          reading: row.exampleReading,
+          meaning: row.meaning,
+          romaji: readingRomaji,
+          on: row.onyomi ? `${row.onyomi}${onRomaji ? ` (${onRomaji})` : ""}` : "",
+          kun: row.kunyomi ? `${row.kunyomi}${kunRomaji ? ` (${kunRomaji})` : ""}` : "",
+          note: row.hanViet ? `Hán Việt: <b>${row.hanViet}</b>` : undefined,
+          examples: [
+            {
+              jp: `${row.exampleWord}（${row.exampleReading}）`,
+              vn: `${readingRomaji} — ${row.exampleMeaning}`,
+            },
+          ],
+        };
+      });
     }
 
     const grammarLevel = { gr: "N5", gr4: "N4", gr3: "N3" }[deckId];
