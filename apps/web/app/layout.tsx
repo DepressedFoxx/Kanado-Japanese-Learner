@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { SiteHeader } from "@/components/SiteHeader";
+import { AudioCredits } from "@/components/AudioCredits";
 
 export const metadata: Metadata = {
   title: "Kanadō — học tiếng Nhật tới N4",
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <SiteHeader />
           <main>{children}</main>
+          <AudioCredits />
         </Providers>
       </body>
     </html>
