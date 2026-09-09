@@ -129,3 +129,59 @@ export interface CoverageRow {
   need: number;
   note?: string;
 }
+
+export type ReadingQuestionType = "short" | "mid" | "long" | "information";
+
+export type ListeningQuestionType =
+  | "task"
+  | "key-point"
+  | "outline"
+  | "verbal-expression"
+  | "quick-response";
+
+export interface ContentAttribution {
+  kind: "original" | "adapted";
+  title: string;
+  url?: string;
+  license: string;
+  note?: string;
+}
+
+export interface ComprehensionQuestion {
+  prompt: string;
+  choices: string[];
+  answerIndex: number;
+  explanation: string;
+}
+
+export interface ReadingContent {
+  id: string;
+  level: Level;
+  type: ReadingQuestionType;
+  title: string;
+  passage: string;
+  characterCount: number;
+  questions: ComprehensionQuestion[];
+  tags: string[];
+  source: ContentAttribution;
+}
+
+export interface ListeningTurn {
+  speaker: string;
+  text: string;
+}
+
+export interface ListeningContent {
+  id: string;
+  level: Level;
+  type: ListeningQuestionType;
+  title: string;
+  /** Bối cảnh được hiển thị trước khi phát audio. */
+  situation: string;
+  /** Mô tả hình thay thế cho dạng 発話表現 cho đến khi có tranh minh họa. */
+  visualPrompt?: string;
+  turns: ListeningTurn[];
+  questions: ComprehensionQuestion[];
+  tags: string[];
+  source: ContentAttribution;
+}

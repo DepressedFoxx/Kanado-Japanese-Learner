@@ -11,7 +11,10 @@ import { KANJI_N3_E } from "./n3-kanji-5";
 import { VOCAB_N3 } from "./n3-vocab";
 import { VOCAB_N3_B } from "./n3-vocab-2";
 import { createRomajiConverter } from "./romaji";
+import { listeningContent as listeningContentDraft } from "./listening-content";
+import { readingContent as readingContentDraft } from "./reading-content";
 import * as raw from "./raw";
+import { validateListeningContent, validateReadingContent } from "./validate";
 import type {
   ClozeQuestion,
   ConfusablePair,
@@ -30,6 +33,12 @@ import type {
 } from "./types";
 
 export * from "./types";
+export * from "./jlpt-content-spec";
+
+export const readingContent = validateReadingContent(readingContentDraft);
+export const listeningContent = validateListeningContent(listeningContentDraft);
+export { listeningByLevel, listeningByType } from "./listening-content";
+export { readingByLevel, readingByType } from "./reading-content";
 
 /* ------------------------------------------------------------------ *
  * Bảng chữ
@@ -378,9 +387,15 @@ export const coverage: CoverageRow[] = [
   { label: "Mẫu ngữ pháp", have: grammar.length, need: N4_TARGET.grammar },
   {
     label: "Luyện nghe",
-    have: 0,
+    have: listeningContent.length,
     need: N4_TARGET.listening,
-    note: "điểm nghe — app không dạy được, phải dùng tài liệu ngoài",
+    note: "bài luyện nghe gốc theo dạng JLPT",
+  },
+  {
+    label: "Luyện đọc",
+    have: readingContent.length,
+    need: 30,
+    note: "bài đọc gốc theo giới hạn độ dài JLPT",
   },
 ];
 
@@ -389,6 +404,8 @@ export const coverageN3: CoverageRow[] = buildCoverageN3(
   kanji.length,
   vocab.length,
   grammar.filter((g) => (g.level as string) === "N3").length,
+  readingContent.filter((item) => item.level === "N3").length,
+  listeningContent.filter((item) => item.level === "N3").length,
 );
 
 /* ------------------------------------------------------------------ *

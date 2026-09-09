@@ -158,3 +158,85 @@ export function validateGrammarRows(
   if (problems.length) throw new ContentDataError(source, problems);
   return rows;
 }
+
+const READING_LENGTHS = {
+  N5: { short: [60, 110], mid: [200, 300], information: [180, 320] },
+  N4: { short: [100, 220], mid: [350, 520], information: [300, 500] },
+  N3: { short: [150, 230], mid: [300, 430], long: [480, 650], information: [500, 700] },
+} as const;
+
+function validateQuestions(
+  items: { questions: ReadingContent["questions"]; id: string }[],
+  problems: string[],
+): void {
+  for (const item of items) {
+    if (item.questions.length === 0) problems.push(`${item.id}: thiếu câu hỏi`);
+    item.questions.forEach((question, index) => {
+      const where = `${item.id}, câu ${index + 1}`;
+      if (question.choices.length < 3 || question.choices.length > 4) {
+        problems.push(`${where}: cần 3 hoặc 4 lựa chọn`);
+      }
+      if (question.answerIndex < 0 || question.answerIndex >= question.choices.length) {
+        problems.push(`${where}: answerIndex nằm ngoài danh sách lựa chọn`);
+      }
+      if (new Set(question.choices).size !== question.choices.length) {
+        problems.push(`${where}: có lựa chọn trùng nhau`);
+      }
+      if (!question.explanation.trim()) problems.push(`${where}: thiếu giải thích`);
+    });
+  }
+}
+
+export function validateReadingContent(items: ReadingContent[]): ReadingContent[] {
+  const problems: string[] = [];
+  const ids = new Set<string>();
+
+  for (const item of items) {
+    if (ids.has(item.id)) problems.push(`${item.id}: id bị trùng`);
+    ids.add(item.id);
+
+    const lengths = READING_LENGTHS[item.level] as Partial<
+      Record<ReadingContent["type"], readonly [number, number]>
+    >;
+    const expected = lengths[item.type];
+    if (!expected) {
+      problems.push(`${item.id}: dạng ${item.type} không có trong JLPT ${item.level}`);
+    } else if (item.characterCount < expected[0] || item.characterCount > expected[1]) {
+      problems.push(
+        `${item.id}: ${item.characterCount} ký tự, cần khoảng ${expected[0]}-${expected[1]}`,
+      );
+    }
+  }
+
+  validateQuestions(items, problems);
+  if (problems.length) throw new ContentDataError("bài đọc JLPT", problems);
+  return items;
+}
+
+const LISTENING_TYPES = {
+  N5: ["task", "key-point", "verbal-expression", "quick-response"],
+  N4: ["task", "key-point", "verbal-expression", "quick-response"],
+  N3: ["task", "key-point", "outline", "verbal-expression", "quick-response"],
+} as const;
+
+export function validateListeningContent(items: ListeningContent[]): ListeningContent[] {
+  const problems: string[] = [];
+  const ids = new Set<string>();
+
+  for (const item of items) {
+    if (ids.has(item.id)) problems.push(`${item.id}: id bị trùng`);
+    ids.add(item.id);
+    if (!(LISTENING_TYPES[item.level] as readonly string[]).includes(item.type)) {
+      problems.push(`${item.id}: dạng ${item.type} không có trong JLPT ${item.level}`);
+    }
+    if (item.turns.length === 0) problems.push(`${item.id}: thiếu transcript`);
+    if (item.type === "verbal-expression" && !item.visualPrompt) {
+      problems.push(`${item.id}: dạng phát thoại thiếu mô tả hình`);
+    }
+  }
+
+  validateQuestions(items, problems);
+  if (problems.length) throw new ContentDataError("bài nghe JLPT", problems);
+  return items;
+}
+import type { ListeningContent, ReadingContent } from "./types";

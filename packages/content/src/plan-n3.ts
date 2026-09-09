@@ -108,13 +108,15 @@ export const resourcesN3: Resource[] = [
 ].map(([area, items, note]) => ({ area, items, note }));
 
 /**
- * App phủ được bao nhiêu cho N3. Con số cố ý để trần trụi: phần lớn nội dung
- * N3 không có trong app, và giấu điều đó chỉ khiến người học vỡ kế hoạch.
+ * App phủ được bao nhiêu cho N3. Các số lượng được lấy từ bundle thực tế để
+ * lộ trình cập nhật cùng lúc với nội dung học.
  */
 export function buildCoverageN3(
   kanjiCount: number,
   vocabCount: number,
   grammarN3Count: number,
+  readingCount: number,
+  listeningCount: number,
 ): CoverageRow[] {
   return [
     { label: "Kanji", have: kanjiCount, need: N3_TARGET.kanji },
@@ -127,15 +129,15 @@ export function buildCoverageN3(
     },
     {
       label: "Đọc hiểu",
-      have: 0,
+      have: readingCount,
       need: 60,
-      note: "điểm đọc — mảng chấm riêng ở N3, app không dạy được",
+      note: "bài đọc gốc theo dạng JLPT",
     },
     {
       label: "Luyện nghe",
-      have: 0,
+      have: listeningCount,
       need: N3_TARGET.listening,
-      note: "điểm nghe — app không dạy được",
+      note: "bài nghe gốc theo dạng JLPT",
     },
   ];
 }
