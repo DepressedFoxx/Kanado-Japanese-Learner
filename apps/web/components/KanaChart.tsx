@@ -41,7 +41,7 @@ export function KanaChart({ script }: { script: "hiragana" | "katakana" }) {
               <span className="tag">{section.label}</span>
               <span className="rule" />
             </div>
-            <div className={`grid${section.columns === 3 ? " w3" : ""}`}>
+            <div className={`kana-grid${section.columns === 3 ? " w3" : ""}`}>
               {section.rows.flat().map((cell, index) => {
                 const entry = cell.entry;
                 const char = entry ? (script === "hiragana" ? entry.hiragana : entry.katakana) : null;

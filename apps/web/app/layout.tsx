@@ -5,9 +5,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { AudioCredits } from "@/components/AudioCredits";
 
 export const metadata: Metadata = {
-  title: "Kanadō — học tiếng Nhật tới N4",
+  title: "Kanadō — học tiếng Nhật tới N3",
   description:
-    "Bảng chữ, kanji, từ vựng, ngữ pháp N5–N4, flashcard lặp lại ngắt quãng và đề kiểm tra, đồng bộ tiến độ giữa các máy.",
+    "Bảng chữ, kanji, từ vựng, ngữ pháp N5–N3, flashcard lặp lại ngắt quãng và đề kiểm tra, đồng bộ tiến độ giữa các máy.",
 };
 
 export const viewport: Viewport = {
