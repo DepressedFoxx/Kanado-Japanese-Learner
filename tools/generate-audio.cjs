@@ -9,6 +9,7 @@ const {
   kanji,
   decks,
   deckCards,
+  listeningContent,
 } = require("../packages/content/dist");
 
 const audioRoot = path.resolve(__dirname, "../apps/web/public/audio");
@@ -35,6 +36,12 @@ const texts = [
       ...kanji.map((entry) => entry.example.reading),
       ...decks.flatMap((deck) =>
         deckCards(deck.id).map((card) => card.reading),
+      ),
+      ...listeningContent.flatMap((lesson) =>
+        lesson.turns.map((turn) => turn.text),
+      ),
+      ...listeningContent.map((lesson) =>
+        lesson.turns.map((turn) => turn.text).join(" "),
       ),
     ]
       .filter(Boolean)
