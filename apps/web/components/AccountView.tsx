@@ -5,6 +5,17 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { isMastered, today, useProgress } from "@/lib/store";
 import { formatDateTime, formatTime } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const TEST_NAME: Record<string, string> = {
   kana: "Bảng chữ",
@@ -90,14 +101,22 @@ export function AccountView() {
           <button className="chip" onClick={() => void syncNow()}>
             Đồng bộ ngay
           </button>
-          <button
-            className="chip"
-            onClick={() => {
-              if (confirm("Xoá toàn bộ tiến độ trên máy này và trên máy chủ?")) void resetAll();
-            }}
-          >
-            Xoá toàn bộ tiến độ
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger className="chip">Xoá toàn bộ tiến độ</AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Xoá toàn bộ tiến độ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Dữ liệu học trên máy này và trên máy chủ sẽ bị xoá. Bạn không thể hoàn tác thao tác
+                  này.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Giữ lại</AlertDialogCancel>
+                <AlertDialogAction onClick={() => void resetAll()}>Xoá tiến độ</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 

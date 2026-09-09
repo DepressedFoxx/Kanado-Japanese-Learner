@@ -9,6 +9,17 @@ import {
 } from "@kanado/content";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { speak } from "@/lib/speech";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { isMastered, isWeak, useProgress, type KanaStat } from "@/lib/store";
 import { normalizeRomaji, shuffle, unique } from "@/lib/utils";
 
@@ -331,14 +342,21 @@ export function Drill() {
           )}
         </div>
         <div>
-          <button
-            className="btn ghost"
-            onClick={() => {
-              if (confirm("Xoá toàn bộ tiến độ đã lưu?")) void resetAll();
-            }}
-          >
-            Xoá toàn bộ tiến độ
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger className="btn ghost">Xoá toàn bộ tiến độ</AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Xoá toàn bộ tiến độ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Toàn bộ kết quả luyện tập đã lưu sẽ bị xoá và không thể khôi phục.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Giữ lại</AlertDialogCancel>
+                <AlertDialogAction onClick={() => void resetAll()}>Xoá tiến độ</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </>
